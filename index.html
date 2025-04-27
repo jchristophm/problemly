@@ -64,6 +64,7 @@
     usageStatistics: false,
   });
 
+  // Load blank canvas
   const blankCanvasURL = 'https://jchristophm.github.io/problemly/blank-canvas.png';
   editor.loadImageFromURL(blankCanvasURL, 'Blank Canvas').then(() => {
     console.log('Blank canvas loaded.');
@@ -71,61 +72,60 @@
 
   // ---- Button Actions ----
 
+  // Draw
   document.getElementById('draw-btn').addEventListener('click', function() {
-    editor.startDrawingMode('FREE_DRAWING', {
-      brushWidth: 0.5, // super fine
+    editor.stopDrawingMode();
+    editor.startDrawingMode('FREE_DRAWING');
+    editor.setBrush({
+      width: 0.5, // Ultra-fine
       color: '#000000'
     });
   });
 
+  // Line
   document.getElementById('line-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
-    const canvas = editor.getCanvas();
-    const line = new fabric.Line([0, 0, 100, 0], {
-      left: 200,
-      top: 250,
+    editor.addShape('line', {
       stroke: '#000000',
       strokeWidth: 2,
-      selectable: true
+      width: 100,
+      height: 0,
+      left: 200,
+      top: 250
     });
-    canvas.add(line);
-    canvas.setActiveObject(line);
-    canvas.renderAll();
   });
 
+  // Arrow
   document.getElementById('arrow-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
-    const canvas = editor.getCanvas();
-
-    const line = new fabric.Line([0, 0, 80, 0], {
+    const canvas = editor._graphics._canvas;
+    const line = new fabric.Line([0, 0, 100, 0], {
       stroke: '#000000',
       strokeWidth: 2,
-      selectable: false
+      originX: 'center',
+      originY: 'center'
     });
-
-    const arrowHead = new fabric.Triangle({
+    const triangle = new fabric.Triangle({
       width: 10,
       height: 10,
       fill: '#000000',
-      left: 80,
+      left: 100,
       top: 0,
-      angle: 90,
       originX: 'center',
       originY: 'center',
-      selectable: false
+      angle: 90
     });
-
-    const arrow = new fabric.Group([line, arrowHead], {
+    const arrow = new fabric.Group([line, triangle], {
       left: 200,
       top: 250,
       selectable: true
     });
-
     canvas.add(arrow);
     canvas.setActiveObject(arrow);
     canvas.renderAll();
   });
 
+  // Text
   document.getElementById('text-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
     editor.addText('Label', {
@@ -142,6 +142,7 @@
     });
   });
 
+  // Square
   document.getElementById('square-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
     editor.addShape('rect', {
@@ -155,28 +156,25 @@
     });
   });
 
+  // Circle
   document.getElementById('circle-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
-    const canvas = editor.getCanvas();
-    const circle = new fabric.Circle({
-      radius: 40,
-      left: 200,
-      top: 200,
+    editor.addShape('circle', {
+      fill: 'transparent',
       stroke: '#000000',
       strokeWidth: 2,
-      fill: 'transparent',
-      originX: 'center',
-      originY: 'center'
+      radius: 40,
+      left: 200,
+      top: 250
     });
-    canvas.add(circle);
-    canvas.setActiveObject(circle);
-    canvas.renderAll();
   });
 
+  // Attach
   document.getElementById('attach-btn').addEventListener('click', function() {
     const dataURL = editor.toDataURL();
     window.parent.postMessage({ type: 'attachImage', dataURL: dataURL }, '*');
   });
+
 </script>
 
 </body>
