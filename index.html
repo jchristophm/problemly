@@ -22,22 +22,26 @@
 
 <div id="tui-image-editor-container"></div>
 
+<!-- THESE THREE SCRIPTS are REQUIRED NOW -->
+<script src="https://uicdn.toast.com/tui-code-snippet/latest/tui-code-snippet.js"></script>
+<script src="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.js"></script>
 <script src="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.js"></script>
+
 <script>
   const editor = new tui.ImageEditor(document.querySelector('#tui-image-editor-container'), {
     includeUI: {
       loadImage: {
-        path: 'https://jchristophm.github.io/problemly/blank-canvas.png', // <-- YOUR correct blank canvas
+        path: 'https://jchristophm.github.io/problemly/blank-canvas.png',
         name: 'Blank Canvas'
       },
-      menu: ['shape', 'draw', 'text'], // <-- Only these three tools
-      initMenu: 'draw', // <-- Pen tool ready immediately
-      menuBarPosition: 'bottom', // <-- Menu at bottom
+      menu: ['shape', 'draw', 'text'],
+      initMenu: 'draw',
+      menuBarPosition: 'bottom',
       uiSize: {
         width: window.innerWidth,
         height: window.innerHeight
       },
-      theme: {}, // <-- Important: disables sample image/theme loading
+      theme: {},
     },
     cssMaxWidth: 500,
     cssMaxHeight: 500,
@@ -45,7 +49,7 @@
       cornerSize: 20,
       rotatingPointOffset: 70,
     },
-    usageStatistics: false // <-- No analytics ping
+    usageStatistics: false
   });
 </script>
 
