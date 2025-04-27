@@ -2,42 +2,53 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Image Editor</title>
-  <link rel="stylesheet" href="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.min.css">
+  <title>Physics Diagram Editor</title>
+  <link rel="stylesheet" href="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.css">
   <style>
-    body { margin: 0; overflow: hidden; }
-    #tui-image-editor-container { width: 100vw; height: 100vh; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #tui-image-editor-container {
+      width: 700px;
+      height: 600px;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
   </style>
 </head>
 <body>
-  <div id="tui-image-editor-container"></div>
 
-  <script src="https://uicdn.toast.com/tui-code-snippet/latest/tui-code-snippet.min.js"></script>
-  <script src="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.js"></script>
-  <script src="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.min.js"></script>
-  <script>
-    const editor = new tui.ImageEditor(document.querySelector('#tui-image-editor-container'), {
-      includeUI: {
-        loadImage: {
-          path: '',
-          name: 'Blank'
-        },
-        theme: {},
-        menu: ['shape', 'draw', 'text'],
-        initMenu: 'shape',
-        uiSize: {
-          width: window.innerWidth,
-          height: window.innerHeight
-        },
-        menuBarPosition: 'bottom'
+<div id="tui-image-editor-container"></div>
+
+<script src="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.js"></script>
+<script>
+  const editor = new tui.ImageEditor('#tui-image-editor-container', {
+    includeUI: {
+      loadImage: {
+        path: 'https://jchristophm.github.io/problemly/assets/blank-canvas.png', // Your uploaded blank canvas
+        name: 'Blank Canvas',
       },
-      cssMaxWidth: 1000,
-      cssMaxHeight: 800,
-      selectionStyle: {
-        cornerSize: 20,
-        rotatingPointOffset: 70
-      }
-    });
-   </script>
+      menu: ['shape', 'draw', 'text'],
+      initMenu: '',
+      uiSize: {
+        width: '700px',
+        height: '600px',
+      },
+      menuBarPosition: 'bottom',
+    },
+    cssMaxWidth: 500,
+    cssMaxHeight: 500,
+    selectionStyle: {
+      cornerSize: 20,
+      rotatingPointOffset: 70,
+    },
+  });
+</script>
+
 </body>
 </html>
