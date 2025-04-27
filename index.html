@@ -21,7 +21,7 @@
     }
     #toolbar button {
       margin: 0 5px;
-      padding: 6px 12px;
+      padding: 6px 10px;
       font-size: 14px;
       cursor: pointer;
     }
@@ -37,9 +37,13 @@
 <body>
 
 <div id="toolbar">
+  <button id="select-btn">Select</button>
   <button id="draw-btn">Draw</button>
-  <button id="line-btn">Line/Arrow</button>
+  <button id="line-btn">Line</button>
+  <button id="arrow-btn">Arrow</button>
   <button id="text-btn">Text</button>
+  <button id="square-btn">Square</button>
+  <button id="circle-btn">Circle</button>
   <button id="attach-btn">Attach</button>
 </div>
 
@@ -51,7 +55,6 @@
 <script src="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.js"></script>
 
 <script>
-  // Initialize editor WITHOUT includeUI
   const editor = new tui.ImageEditor('#editor-container', {
     cssMaxWidth: 500,
     cssMaxHeight: 500,
@@ -62,41 +65,79 @@
     usageStatistics: false,
   });
 
-  // Load a blank white canvas
-  const blankCanvasURL = 'https://jchristophm.github.io/problemly/blank-canvas.png'; // 500x500 blank image
+  const blankCanvasURL = 'https://jchristophm.github.io/problemly/blank-canvas.png'; // Your blank 500x500 white canvas
   editor.loadImageFromURL(blankCanvasURL, 'Blank Canvas').then(() => {
     console.log('Blank canvas loaded.');
   });
 
-  // Button actions
+  // Button Actions
+  document.getElementById('select-btn').addEventListener('click', function() {
+    editor.stopDrawingMode();
+  });
+
   document.getElementById('draw-btn').addEventListener('click', function() {
     editor.startDrawingMode('FREE_DRAWING', {
-      brushWidth: 3,
+      brushWidth: 1, // Super fine drawing!
       color: '#000000'
     });
   });
 
   document.getElementById('line-btn').addEventListener('click', function() {
-    editor.stopDrawingMode(); // Stop free drawing if active
+    editor.stopDrawingMode();
     editor.startDrawingMode('LINE_DRAWING', {
-      width: 3,
+      width: 2,
       color: '#000000',
-      arrowType: 'arrow' // Force arrowhead at end
+      arrowType: null // Line only, no arrows
+    });
+  });
+
+  document.getElementById('arrow-btn').addEventListener('click', function() {
+    editor.stopDrawingMode();
+    editor.startDrawingMode('LINE_DRAWING', {
+      width: 2,
+      color: '#000000',
+      arrowType: 'arrow' // Single arrowhead
     });
   });
 
   document.getElementById('text-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
-    editor.addText('Text', {
+    editor.addText('Label', {
       styles: {
         fill: '#000000',
-        fontSize: 20,
-        fontFamily: 'Arial'
+        fontSize: 18,
+        fontFamily: 'Arial',
+        fontWeight: 'bold'
       },
       position: {
-        x: 100,
-        y: 100
+        x: 150,
+        y: 150
       }
+    });
+  });
+
+  document.getElementById('square-btn').addEventListener('click', function() {
+    editor.stopDrawingMode();
+    editor.addShape('rect', {
+      fill: 'transparent',
+      stroke: '#000000',
+      strokeWidth: 2,
+      width: 80,
+      height: 80,
+      left: 200,
+      top: 200
+    });
+  });
+
+  document.getElementById('circle-btn').addEventListener('click', function() {
+    editor.stopDrawingMode();
+    editor.addShape('circle', {
+      fill: 'transparent',
+      stroke: '#000000',
+      strokeWidth: 2,
+      radius: 40,
+      left: 200,
+      top: 200
     });
   });
 
