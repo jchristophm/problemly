@@ -12,31 +12,32 @@
       overflow: hidden;
       background: #f0f0f0;
     }
-    #tui-image-editor {
+    #tui-image-editor-container {
       height: 100vh;
+      width: 100%;
     }
   </style>
 </head>
 <body>
 
-<div id="tui-image-editor"></div>
+<div id="tui-image-editor-container"></div>
 
 <script src="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.js"></script>
 <script>
-  const imageEditor = new tui.ImageEditor('#tui-image-editor', {
+  const editor = new tui.ImageEditor(document.querySelector('#tui-image-editor-container'), {
     includeUI: {
       loadImage: {
-        path: 'https://jchristophm.github.io/problemly/blank-canvas.png', // << Correct path to your blank canvas
+        path: 'https://jchristophm.github.io/problemly/blank-canvas.png', // <-- YOUR correct blank canvas
         name: 'Blank Canvas'
       },
-      menu: ['shape', 'draw', 'text'],
-      initMenu: 'draw', // Immediately opens draw mode
-      menuBarPosition: 'bottom',
+      menu: ['shape', 'draw', 'text'], // <-- Only these three tools
+      initMenu: 'draw', // <-- Pen tool ready immediately
+      menuBarPosition: 'bottom', // <-- Menu at bottom
       uiSize: {
         width: window.innerWidth,
         height: window.innerHeight
       },
-      theme: {}, // Fix default sample theme loading
+      theme: {}, // <-- Important: disables sample image/theme loading
     },
     cssMaxWidth: 500,
     cssMaxHeight: 500,
@@ -44,7 +45,7 @@
       cornerSize: 20,
       rotatingPointOffset: 70,
     },
-    usageStatistics: false
+    usageStatistics: false // <-- No analytics ping
   });
 </script>
 
