@@ -64,46 +64,50 @@
     usageStatistics: false,
   });
 
-  // Load blank canvas
   const blankCanvasURL = 'https://jchristophm.github.io/problemly/blank-canvas.png';
   editor.loadImageFromURL(blankCanvasURL, 'Blank Canvas').then(() => {
     console.log('Blank canvas loaded.');
   });
 
+  // Get direct Fabric.js canvas
+  const getCanvas = () => editor._graphics._canvas;
+
   // ---- Button Actions ----
 
-  // Draw
   document.getElementById('draw-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
     editor.startDrawingMode('FREE_DRAWING');
     editor.setBrush({
-      width: 0.5, // Ultra-fine
+      width: 0.5, // Ultra fine brush
       color: '#000000'
     });
   });
 
-  // Line
   document.getElementById('line-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
-    editor.addShape('line', {
-      stroke: '#000000',
-      strokeWidth: 2,
-      width: 100,
-      height: 0,
-      left: 200,
-      top: 250
-    });
-  });
-
-  // Arrow
-  document.getElementById('arrow-btn').addEventListener('click', function() {
-    editor.stopDrawingMode();
-    const canvas = editor._graphics._canvas;
+    const canvas = getCanvas();
     const line = new fabric.Line([0, 0, 100, 0], {
       stroke: '#000000',
       strokeWidth: 2,
-      originX: 'center',
-      originY: 'center'
+      left: 200,
+      top: 250,
+      selectable: true,
+      originX: 'left',
+      originY: 'top'
+    });
+    canvas.add(line);
+    canvas.setActiveObject(line);
+    canvas.renderAll();
+  });
+
+  document.getElementById('arrow-btn').addEventListener('click', function() {
+    editor.stopDrawingMode();
+    const canvas = getCanvas();
+    const line = new fabric.Line([0, 0, 100, 0], {
+      stroke: '#000000',
+      strokeWidth: 2,
+      originX: 'left',
+      originY: 'top'
     });
     const triangle = new fabric.Triangle({
       width: 10,
@@ -125,7 +129,6 @@
     canvas.renderAll();
   });
 
-  // Text
   document.getElementById('text-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
     editor.addText('Label', {
@@ -142,7 +145,6 @@
     });
   });
 
-  // Square
   document.getElementById('square-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
     editor.addShape('rect', {
@@ -156,20 +158,25 @@
     });
   });
 
-  // Circle
   document.getElementById('circle-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
-    editor.addShape('circle', {
-      fill: 'transparent',
+    const canvas = getCanvas();
+    const circle = new fabric.Circle({
+      radius: 40,
       stroke: '#000000',
       strokeWidth: 2,
-      radius: 40,
+      fill: 'transparent',
       left: 200,
-      top: 250
+      top: 250,
+      originX: 'center',
+      originY: 'center',
+      selectable: true
     });
+    canvas.add(circle);
+    canvas.setActiveObject(circle);
+    canvas.renderAll();
   });
 
-  // Attach
   document.getElementById('attach-btn').addEventListener('click', function() {
     const dataURL = editor.toDataURL();
     window.parent.postMessage({ type: 'attachImage', dataURL: dataURL }, '*');
