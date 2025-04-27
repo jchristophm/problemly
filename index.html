@@ -70,34 +70,57 @@
     console.log('Blank canvas loaded.');
   });
 
-  // Button Actions
+  // ---- Button Actions ----
+
   document.getElementById('select-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
   });
 
   document.getElementById('draw-btn').addEventListener('click', function() {
     editor.startDrawingMode('FREE_DRAWING', {
-      brushWidth: 1, // Super fine drawing!
+      brushWidth: 1, // Super fine brush
       color: '#000000'
     });
   });
 
   document.getElementById('line-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
-    editor.startDrawingMode('LINE_DRAWING', {
-      width: 2,
-      color: '#000000',
-      arrowType: null // Line only, no arrows
+    editor.addShape('line', {
+      stroke: '#000000',
+      strokeWidth: 2,
+      width: 100,
+      height: 0,
+      left: 200,
+      top: 200
     });
   });
 
   document.getElementById('arrow-btn').addEventListener('click', function() {
     editor.stopDrawingMode();
-    editor.startDrawingMode('LINE_DRAWING', {
-      width: 2,
-      color: '#000000',
-      arrowType: 'arrow' // Single arrowhead
+    // Create an arrow manually by adding a polyline
+    const canvas = editor.getCanvas();
+    const arrow = new fabric.Group([
+      new fabric.Line([0, 0, 100, 0], {
+        stroke: '#000000',
+        strokeWidth: 2
+      }),
+      new fabric.Triangle({
+        left: 100,
+        top: 0,
+        originX: 'center',
+        originY: 'center',
+        angle: 90,
+        width: 10,
+        height: 10,
+        fill: '#000000'
+      })
+    ], {
+      left: 200,
+      top: 200,
+      selectable: true
     });
+    canvas.add(arrow);
+    editor._graphics._canvas.renderAll();
   });
 
   document.getElementById('text-btn').addEventListener('click', function() {
@@ -145,6 +168,7 @@
     const dataURL = editor.toDataURL();
     window.parent.postMessage({ type: 'attachImage', dataURL: dataURL }, '*');
   });
+
 </script>
 
 </body>
