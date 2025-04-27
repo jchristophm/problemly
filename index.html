@@ -8,16 +8,13 @@
     html, body {
       height: 100%;
       margin: 0;
+      padding: 0;
+      overflow: hidden;
       background: #f0f0f0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
     #tui-image-editor-container {
-      width: 700px;
-      height: 600px;
-      border: 1px solid #ccc;
-      background: #fff;
+      width: 100%;
+      height: 100vh;
     }
   </style>
 </head>
@@ -27,21 +24,20 @@
 
 <script src="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.js"></script>
 <script>
-  const editor = new tui.ImageEditor('#tui-image-editor-container', {
+  const editor = new tui.ImageEditor(document.querySelector('#tui-image-editor-container'), {
     includeUI: {
       loadImage: {
-        path: 'https://jchristophm.github.io/problemly/blank-canvas.png',  // << Your correct blank canvas
-        name: 'Blank Canvas',
+        path: 'https://jchristophm.github.io/problemly/blank-canvas.png', // Your correct blank canvas!
+        name: 'Blank Canvas'
       },
       menu: ['shape', 'draw', 'text'],
-      initMenu: '',
+      initMenu: 'draw', // Open with "draw" tool selected
       uiSize: {
-        width: '700px',
-        height: '600px',
+        width: window.innerWidth,
+        height: window.innerHeight,
       },
       menuBarPosition: 'bottom',
-      theme: {},  // << critical fix to prevent sample image loading
-      usageStatistics: false,  // << optional privacy
+      theme: {},  // important fix
     },
     cssMaxWidth: 500,
     cssMaxHeight: 500,
@@ -49,7 +45,7 @@
       cornerSize: 20,
       rotatingPointOffset: 70,
     },
-    usageStatistics: false,  // << again at root level
+    usageStatistics: false,
   });
 </script>
 
