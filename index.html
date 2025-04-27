@@ -30,6 +30,7 @@
       height: 500px;
       border: 1px solid #ccc;
       background: #fff;
+      position: relative;
     }
   </style>
 </head>
@@ -37,7 +38,7 @@
 
 <div id="toolbar">
   <button id="draw-btn">Draw</button>
-  <button id="shape-btn">Shape</button>
+  <button id="line-btn">Line/Arrow</button>
   <button id="text-btn">Text</button>
   <button id="attach-btn">Attach</button>
 </div>
@@ -50,47 +51,53 @@
 <script src="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.js"></script>
 
 <script>
-  const editor = new tui.ImageEditor(document.querySelector('#editor-container'), {
-    includeUI: {
-      loadImage: {
-        path: 'https://jchristophm.github.io/problemly/blank-canvas.png',  // Your blank 500x500 white canvas
-        name: 'Blank Canvas'
-      },
-      menu: ['draw', 'shape', 'text'],
-      initMenu: 'draw',
-      menuBarPosition: 'bottom',
-      uiSize: {
-        width: 500,
-        height: 500,
-      },
-      theme: {},
-    },
+  // Initialize editor WITHOUT includeUI
+  const editor = new tui.ImageEditor('#editor-container', {
     cssMaxWidth: 500,
     cssMaxHeight: 500,
     selectionStyle: {
       cornerSize: 20,
       rotatingPointOffset: 70,
     },
-    usageStatistics: false
+    usageStatistics: false,
   });
 
-  // Remove Toast UI watermark/logo
-  document.addEventListener('DOMContentLoaded', function() {
-    const branding = document.querySelector('.tui-image-editor-header-logo');
-    if (branding) branding.style.display = 'none';
+  // Load a blank white canvas
+  const blankCanvasURL = 'https://jchristophm.github.io/problemly/blank-canvas.png'; // 500x500 blank image
+  editor.loadImageFromURL(blankCanvasURL, 'Blank Canvas').then(() => {
+    console.log('Blank canvas loaded.');
   });
 
-  // Button Actions
+  // Button actions
   document.getElementById('draw-btn').addEventListener('click', function() {
-    editor.changeMenu('draw');
+    editor.startDrawingMode('FREE_DRAWING', {
+      brushWidth: 3,
+      color: '#000000'
+    });
   });
 
-  document.getElementById('shape-btn').addEventListener('click', function() {
-    editor.changeMenu('shape');
+  document.getElementById('line-btn').addEventListener('click', function() {
+    editor.stopDrawingMode(); // Stop free drawing if active
+    editor.startDrawingMode('LINE_DRAWING', {
+      width: 3,
+      color: '#000000',
+      arrowType: 'arrow' // Force arrowhead at end
+    });
   });
 
   document.getElementById('text-btn').addEventListener('click', function() {
-    editor.changeMenu('text');
+    editor.stopDrawingMode();
+    editor.addText('Text', {
+      styles: {
+        fill: '#000000',
+        fontSize: 20,
+        fontFamily: 'Arial'
+      },
+      position: {
+        x: 100,
+        y: 100
+      }
+    });
   });
 
   document.getElementById('attach-btn').addEventListener('click', function() {
