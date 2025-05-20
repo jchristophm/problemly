@@ -1,4 +1,4 @@
-// Updated script.js: fixed vector fatness and disappearing on drag
+// Fully fixed script.js — correct group selection and vector dragging
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
 let currentTool = "select";
@@ -38,10 +38,13 @@ function startDraw(e) {
   isDrawing = true;
 
   if (currentTool === "select") {
-    const target = e.target.closest("line, rect, circle, text");
+    let target = e.target.closest("g, line, rect, circle, text");
     if (target && target !== canvas) {
+      if (target.tagName !== "g" && target.parentNode.tagName === "g") {
+        target = target.parentNode; // Promote to group
+      }
       selectedElement = target;
-      selectedElement.setAttribute("stroke", "orange");
+      highlightSelection(selectedElement);
 
       if (selectedElement.tagName === "text") {
         offsetX = x - parseFloat(selectedElement.getAttribute("x"));
@@ -52,12 +55,13 @@ function startDraw(e) {
       } else if (selectedElement.tagName === "rect") {
         offsetX = x - parseFloat(selectedElement.getAttribute("x"));
         offsetY = y - parseFloat(selectedElement.getAttribute("y"));
-      } else if (selectedElement.tagName === "line") {
+      } else if (selectedElement.tagName === "g") {
+        const main = selectedElement.querySelector("line:last-child");
         dragOffset = {
-          x1: parseFloat(selectedElement.getAttribute("x1")),
-          y1: parseFloat(selectedElement.getAttribute("y1")),
-          x2: parseFloat(selectedElement.getAttribute("x2")),
-          y2: parseFloat(selectedElement.getAttribute("y2")),
+          x1: parseFloat(main.getAttribute("x1")),
+          y1: parseFloat(main.getAttribute("y1")),
+          x2: parseFloat(main.getAttribute("x2")),
+          y2: parseFloat(main.getAttribute("y2")),
           dx: x,
           dy: y
         };
@@ -153,17 +157,20 @@ function dragDraw(e) {
     } else if (selectedElement.tagName === "rect") {
       selectedElement.setAttribute("x", x - offsetX);
       selectedElement.setAttribute("y", y - offsetY);
-    } else if (selectedElement.tagName === "line") {
+    } else if (selectedElement.tagName === "g") {
+      const [shadow, main] = selectedElement.querySelectorAll("line");
       const dx = x - dragOffset.dx;
       const dy = y - dragOffset.dy;
       const x1 = dragOffset.x1 + dx;
       const y1 = dragOffset.y1 + dy;
       const x2 = dragOffset.x2 + dx;
       const y2 = dragOffset.y2 + dy;
-      selectedElement.setAttribute("x1", x1);
-      selectedElement.setAttribute("y1", y1);
-      selectedElement.setAttribute("x2", x2);
-      selectedElement.setAttribute("y2", y2);
+      [shadow, main].forEach(line => {
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+      });
     }
     return;
   }
@@ -210,8 +217,22 @@ document.addEventListener("keydown", (e) => {
 
 function clearSelection() {
   if (selectedElement) {
-    selectedElement.removeAttribute("stroke");
+    if (selectedElement.tagName === "g") {
+      const line = selectedElement.querySelector("line:last-child");
+      line.removeAttribute("stroke");
+    } else {
+      selectedElement.removeAttribute("stroke");
+    }
     selectedElement = null;
+  }
+}
+
+function highlightSelection(el) {
+  if (el.tagName === "g") {
+    const main = el.querySelector("line:last-child");
+    main.setAttribute("stroke", "orange");
+  } else {
+    el.setAttribute("stroke", "orange");
   }
 }
 
