@@ -1,4 +1,4 @@
-// Fix: switch to select only after drawing ends (not before)
+// Final drawing fix: correctly delay tool switch until draw finishes
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
 let currentTool = "select";
@@ -9,6 +9,7 @@ let currentElement = null;
 let selectedElement = null;
 let offsetX = 0, offsetY = 0;
 let dragOffset = {};
+let justDrew = false;
 
 function getCoords(e) {
   const rect = canvas.getBoundingClientRect();
@@ -47,6 +48,7 @@ function startDraw(e) {
   startX = x;
   startY = y;
   isDrawing = true;
+  justDrew = false;
 
   if (currentTool === "select") {
     let target = e.target.closest("g, line, rect, circle, text");
@@ -115,6 +117,7 @@ function startDraw(e) {
       group.appendChild(main);
       canvas.appendChild(group);
       currentElement = group;
+      justDrew = true;
       break;
     }
     case "box": {
@@ -126,6 +129,7 @@ function startDraw(e) {
       currentElement.setAttribute("fill", "#4444ff33");
       currentElement.setAttribute("stroke", "blue");
       canvas.appendChild(currentElement);
+      justDrew = true;
       break;
     }
     case "circle": {
@@ -136,6 +140,7 @@ function startDraw(e) {
       currentElement.setAttribute("fill", "#00aa0033");
       currentElement.setAttribute("stroke", "green");
       canvas.appendChild(currentElement);
+      justDrew = true;
       break;
     }
     case "text": {
@@ -155,69 +160,14 @@ function startDraw(e) {
   }
 }
 
-canvas.addEventListener("mousemove", dragDraw);
-canvas.addEventListener("touchmove", dragDraw);
-
-function dragDraw(e) {
-  if (!isDrawing) return;
-  const { x, y } = getCoords(e);
-
-  if (currentTool === "select" && selectedElement) {
-    if (selectedElement.tagName === "text") {
-      selectedElement.setAttribute("x", x - offsetX);
-      selectedElement.setAttribute("y", y - offsetY);
-    } else if (selectedElement.tagName === "circle") {
-      selectedElement.setAttribute("cx", x - offsetX);
-      selectedElement.setAttribute("cy", y - offsetY);
-    } else if (selectedElement.tagName === "rect") {
-      selectedElement.setAttribute("x", x - offsetX);
-      selectedElement.setAttribute("y", y - offsetY);
-    } else if (selectedElement.tagName === "g") {
-      const [shadow, main] = selectedElement.querySelectorAll("line");
-      const dx = x - dragOffset.dx;
-      const dy = y - dragOffset.dy;
-      const x1 = dragOffset.x1 + dx;
-      const y1 = dragOffset.y1 + dy;
-      const x2 = dragOffset.x2 + dx;
-      const y2 = dragOffset.y2 + dy;
-      [shadow, main].forEach(line => {
-        line.setAttribute("x1", x1);
-        line.setAttribute("y1", y1);
-        line.setAttribute("x2", x2);
-        line.setAttribute("y2", y2);
-      });
-    }
-    return;
-  }
-
-  if (!currentElement) return;
-
-  if (currentElement.tagName === "g") {
-    const [shadow, main] = currentElement.querySelectorAll("line");
-    shadow.setAttribute("x2", x);
-    shadow.setAttribute("y2", y);
-    main.setAttribute("x2", x);
-    main.setAttribute("y2", y);
-  }
-  else if (currentElement.tagName === "rect") {
-    currentElement.setAttribute("width", Math.abs(x - startX));
-    currentElement.setAttribute("height", Math.abs(y - startY));
-  }
-  else if (currentElement.tagName === "circle") {
-    const dx = x - startX;
-    const dy = y - startY;
-    currentElement.setAttribute("r", Math.sqrt(dx * dx + dy * dy));
-  }
-}
-
 canvas.addEventListener("mouseup", () => {
   isDrawing = false;
   currentElement = null;
-  currentTool = "select";
+  if (justDrew) currentTool = "select";
 });
 
 canvas.addEventListener("touchend", () => {
   isDrawing = false;
   currentElement = null;
-  currentTool = "select";
+  if (justDrew) currentTool = "select";
 });
