@@ -1,4 +1,4 @@
-// Updated script.js: slimmed line hitboxes, removed coordinate system tools
+// Updated script.js: fixed vector fatness and disappearing on drag
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
 let currentTool = "select";
@@ -8,6 +8,7 @@ let startX = 0, startY = 0;
 let currentElement = null;
 let selectedElement = null;
 let offsetX = 0, offsetY = 0;
+let dragOffset = {};
 
 function getCoords(e) {
   const rect = canvas.getBoundingClientRect();
@@ -41,6 +42,7 @@ function startDraw(e) {
     if (target && target !== canvas) {
       selectedElement = target;
       selectedElement.setAttribute("stroke", "orange");
+
       if (selectedElement.tagName === "text") {
         offsetX = x - parseFloat(selectedElement.getAttribute("x"));
         offsetY = y - parseFloat(selectedElement.getAttribute("y"));
@@ -51,8 +53,14 @@ function startDraw(e) {
         offsetX = x - parseFloat(selectedElement.getAttribute("x"));
         offsetY = y - parseFloat(selectedElement.getAttribute("y"));
       } else if (selectedElement.tagName === "line") {
-        offsetX = x - parseFloat(selectedElement.getAttribute("x1"));
-        offsetY = y - parseFloat(selectedElement.getAttribute("y1"));
+        dragOffset = {
+          x1: parseFloat(selectedElement.getAttribute("x1")),
+          y1: parseFloat(selectedElement.getAttribute("y1")),
+          x2: parseFloat(selectedElement.getAttribute("x2")),
+          y2: parseFloat(selectedElement.getAttribute("y2")),
+          dx: x,
+          dy: y
+        };
       }
     } else {
       clearSelection();
@@ -62,21 +70,36 @@ function startDraw(e) {
 
   switch (currentTool) {
     case "vector":
-    case "line":
-      currentElement = document.createElementNS(svgNS, "line");
-      currentElement.setAttribute("x1", x);
-      currentElement.setAttribute("y1", y);
-      currentElement.setAttribute("x2", x);
-      currentElement.setAttribute("y2", y);
-      currentElement.setAttribute("stroke", currentTool === "vector" ? "red" : "black");
-      currentElement.setAttribute("stroke-width", "4");
-      currentElement.setAttribute("stroke-linecap", "round");
+    case "line": {
+      const group = document.createElementNS(svgNS, "g");
+      const shadow = document.createElementNS(svgNS, "line");
+      const main = document.createElementNS(svgNS, "line");
+
+      [shadow, main].forEach(line => {
+        line.setAttribute("x1", x);
+        line.setAttribute("y1", y);
+        line.setAttribute("x2", x);
+        line.setAttribute("y2", y);
+      });
+
+      shadow.setAttribute("stroke", "transparent");
+      shadow.setAttribute("stroke-width", "10");
+      shadow.setAttribute("pointer-events", "stroke");
+
+      main.setAttribute("stroke", currentTool === "vector" ? "red" : "black");
+      main.setAttribute("stroke-width", "2");
+      main.setAttribute("stroke-linecap", "round");
       if (currentTool === "vector") {
-        currentElement.setAttribute("marker-end", "url(#arrowhead)");
+        main.setAttribute("marker-end", "url(#arrowhead)");
       }
-      canvas.appendChild(currentElement);
+
+      group.appendChild(shadow);
+      group.appendChild(main);
+      canvas.appendChild(group);
+      currentElement = group;
       break;
-    case "box":
+    }
+    case "box": {
       currentElement = document.createElementNS(svgNS, "rect");
       currentElement.setAttribute("x", x);
       currentElement.setAttribute("y", y);
@@ -86,7 +109,8 @@ function startDraw(e) {
       currentElement.setAttribute("stroke", "blue");
       canvas.appendChild(currentElement);
       break;
-    case "circle":
+    }
+    case "circle": {
       currentElement = document.createElementNS(svgNS, "circle");
       currentElement.setAttribute("cx", x);
       currentElement.setAttribute("cy", y);
@@ -95,7 +119,8 @@ function startDraw(e) {
       currentElement.setAttribute("stroke", "green");
       canvas.appendChild(currentElement);
       break;
-    case "text":
+    }
+    case "text": {
       const text = prompt("Enter label text:");
       if (text) {
         const t = document.createElementNS(svgNS, "text");
@@ -107,6 +132,7 @@ function startDraw(e) {
       }
       isDrawing = false;
       break;
+    }
   }
 }
 
@@ -128,33 +154,37 @@ function dragDraw(e) {
       selectedElement.setAttribute("x", x - offsetX);
       selectedElement.setAttribute("y", y - offsetY);
     } else if (selectedElement.tagName === "line") {
-      const dx = x - offsetX;
-      const dy = y - offsetY;
-      const x2 = parseFloat(selectedElement.getAttribute("x2")) - parseFloat(selectedElement.getAttribute("x1"));
-      const y2 = parseFloat(selectedElement.getAttribute("y2")) - parseFloat(selectedElement.getAttribute("y1"));
-      selectedElement.setAttribute("x1", dx);
-      selectedElement.setAttribute("y1", dy);
-      selectedElement.setAttribute("x2", dx + x2);
-      selectedElement.setAttribute("y2", dy + y2);
+      const dx = x - dragOffset.dx;
+      const dy = y - dragOffset.dy;
+      const x1 = dragOffset.x1 + dx;
+      const y1 = dragOffset.y1 + dy;
+      const x2 = dragOffset.x2 + dx;
+      const y2 = dragOffset.y2 + dy;
+      selectedElement.setAttribute("x1", x1);
+      selectedElement.setAttribute("y1", y1);
+      selectedElement.setAttribute("x2", x2);
+      selectedElement.setAttribute("y2", y2);
     }
     return;
   }
 
   if (!currentElement) return;
-  switch (currentElement.tagName) {
-    case "line":
-      currentElement.setAttribute("x2", x);
-      currentElement.setAttribute("y2", y);
-      break;
-    case "rect":
-      currentElement.setAttribute("width", Math.abs(x - startX));
-      currentElement.setAttribute("height", Math.abs(y - startY));
-      break;
-    case "circle":
-      const dx = x - startX;
-      const dy = y - startY;
-      currentElement.setAttribute("r", Math.sqrt(dx * dx + dy * dy));
-      break;
+
+  if (currentElement.tagName === "g") {
+    const [shadow, main] = currentElement.querySelectorAll("line");
+    shadow.setAttribute("x2", x);
+    shadow.setAttribute("y2", y);
+    main.setAttribute("x2", x);
+    main.setAttribute("y2", y);
+  }
+  else if (currentElement.tagName === "rect") {
+    currentElement.setAttribute("width", Math.abs(x - startX));
+    currentElement.setAttribute("height", Math.abs(y - startY));
+  }
+  else if (currentElement.tagName === "circle") {
+    const dx = x - startX;
+    const dy = y - startY;
+    currentElement.setAttribute("r", Math.sqrt(dx * dx + dy * dy));
   }
 }
 
@@ -169,7 +199,11 @@ canvas.addEventListener("touchend", () => {
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Delete" && selectedElement) {
-    canvas.removeChild(selectedElement);
+    if (selectedElement.parentNode.tagName === "g") {
+      selectedElement.parentNode.remove();
+    } else {
+      canvas.removeChild(selectedElement);
+    }
     selectedElement = null;
   }
 });
