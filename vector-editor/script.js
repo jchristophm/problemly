@@ -1,4 +1,4 @@
-// Restored stable version: draw -> select -> move; arrowheads back
+// Final correction: fix vanishing lines and dragging stickiness
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
 let currentTool = "select";
@@ -57,7 +57,6 @@ function startDraw(e) {
   const { x, y } = getCoords(e);
   startX = x;
   startY = y;
-  isDrawing = true;
   currentElement = null;
 
   if (currentTool === "select") {
@@ -95,6 +94,8 @@ function startDraw(e) {
     }
     return;
   }
+
+  isDrawing = true;
 
   switch (currentTool) {
     case "vector":
@@ -164,6 +165,7 @@ function startDraw(e) {
         offsetY = 0;
       }
       isDrawing = false;
+      currentElement = null;
       currentTool = "select";
       return;
     }
@@ -175,6 +177,7 @@ canvas.addEventListener("touchmove", dragDraw);
 
 function dragDraw(e) {
   const { x, y } = getCoords(e);
+
   if (currentTool === "select" && selectedElement) {
     if (selectedElement.tagName === "text") {
       selectedElement.setAttribute("x", x - offsetX);
@@ -202,7 +205,9 @@ function dragDraw(e) {
     }
     return;
   }
+
   if (!isDrawing || !currentElement) return;
+
   if (currentElement.tagName === "g") {
     const [shadow, main] = currentElement.querySelectorAll("line");
     shadow.setAttribute("x2", x);
@@ -225,13 +230,16 @@ canvas.addEventListener("mouseup", () => {
   isDrawing = false;
   currentElement = null;
   if (selectedElement) highlightSelection(selectedElement);
-  currentTool = "select";
+  if (currentTool !== "select") currentTool = "select";
+  else selectedElement = null; // prevent sticky drag
 });
+
 canvas.addEventListener("touchend", () => {
   isDrawing = false;
   currentElement = null;
   if (selectedElement) highlightSelection(selectedElement);
-  currentTool = "select";
+  if (currentTool !== "select") currentTool = "select";
+  else selectedElement = null;
 });
 
 function clearSelection() {
@@ -257,3 +265,4 @@ function highlightSelection(el) {
   }
   selectedElement = el;
 }
+
