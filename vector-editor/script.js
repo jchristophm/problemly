@@ -1,4 +1,4 @@
-// Final final: fixes for drag after auto-select + one selection at a time
+// Fix drag-and-drop for selected items after draw
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
 let currentTool = "select";
@@ -43,10 +43,10 @@ function startDraw(e) {
   const { x, y } = getCoords(e);
   startX = x;
   startY = y;
-  isDrawing = true;
   justDrew = false;
 
   if (currentTool === "select") {
+    isDrawing = false;
     let target = e.target.closest("g, line, rect, circle, text");
     if (target && target !== canvas) {
       if (target.tagName !== "g" && target.parentNode.tagName === "g") {
@@ -80,6 +80,8 @@ function startDraw(e) {
     }
     return;
   }
+
+  isDrawing = true;
 
   switch (currentTool) {
     case "vector":
@@ -171,8 +173,37 @@ canvas.addEventListener("mousemove", dragDraw);
 canvas.addEventListener("touchmove", dragDraw);
 
 function dragDraw(e) {
-  if (!isDrawing || !currentElement) return;
   const { x, y } = getCoords(e);
+
+  if (currentTool === "select" && selectedElement) {
+    if (selectedElement.tagName === "text") {
+      selectedElement.setAttribute("x", x - offsetX);
+      selectedElement.setAttribute("y", y - offsetY);
+    } else if (selectedElement.tagName === "circle") {
+      selectedElement.setAttribute("cx", x - offsetX);
+      selectedElement.setAttribute("cy", y - offsetY);
+    } else if (selectedElement.tagName === "rect") {
+      selectedElement.setAttribute("x", x - offsetX);
+      selectedElement.setAttribute("y", y - offsetY);
+    } else if (selectedElement.tagName === "g") {
+      const [shadow, main] = selectedElement.querySelectorAll("line");
+      const dx = x - dragOffset.dx;
+      const dy = y - dragOffset.dy;
+      const x1 = dragOffset.x1 + dx;
+      const y1 = dragOffset.y1 + dy;
+      const x2 = dragOffset.x2 + dx;
+      const y2 = dragOffset.y2 + dy;
+      [shadow, main].forEach(line => {
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+      });
+    }
+    return;
+  }
+
+  if (!isDrawing || !currentElement) return;
 
   if (currentElement.tagName === "g") {
     const [shadow, main] = currentElement.querySelectorAll("line");
@@ -251,42 +282,3 @@ canvas.addEventListener("touchend", (e) => {
     currentTool = "select";
   }
 });
-
-function clearSelection() {
-  if (selectedElement) {
-    if (selectedElement.tagName === "g") {
-      const main = selectedElement.querySelector("line:last-child");
-      const original = main.getAttribute("data-original-stroke") || "black";
-      main.setAttribute("stroke", original);
-    } else {
-      selectedElement.removeAttribute("stroke");
-    }
-    selectedElement = null;
-  }
-}
-
-function highlightSelection(el) {
-  clearSelection();
-  if (el.tagName === "g") {
-    const main = el.querySelector("line:last-child");
-    main.setAttribute("stroke", "orange");
-  } else {
-    el.setAttribute("stroke", "orange");
-  }
-  selectedElement = el;
-}
-
-const defs = document.createElementNS(svgNS, "defs");
-const marker = document.createElementNS(svgNS, "marker");
-marker.setAttribute("id", "arrowhead");
-marker.setAttribute("markerWidth", "10");
-marker.setAttribute("markerHeight", "7");
-marker.setAttribute("refX", "10");
-marker.setAttribute("refY", "3.5");
-marker.setAttribute("orient", "auto");
-const path = document.createElementNS(svgNS, "path");
-path.setAttribute("d", "M0,0 L10,3.5 L0,7 Z");
-path.setAttribute("fill", "gray");
-marker.appendChild(path);
-defs.appendChild(marker);
-canvas.insertBefore(defs, canvas.firstChild);
