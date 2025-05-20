@@ -1,4 +1,4 @@
-// Final fix: preserve original stroke color when selecting vectors or lines
+// Final fix: delete button + auto-select after draw
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
 let currentTool = "select";
@@ -27,6 +27,17 @@ document.getElementById("toolbar").addEventListener("click", (e) => {
   }
 });
 
+document.getElementById("delete").addEventListener("click", () => {
+  if (selectedElement) {
+    if (selectedElement.tagName === "g") {
+      canvas.removeChild(selectedElement);
+    } else {
+      canvas.removeChild(selectedElement);
+    }
+    selectedElement = null;
+  }
+});
+
 canvas.addEventListener("mousedown", startDraw);
 canvas.addEventListener("touchstart", startDraw);
 
@@ -41,7 +52,7 @@ function startDraw(e) {
     let target = e.target.closest("g, line, rect, circle, text");
     if (target && target !== canvas) {
       if (target.tagName !== "g" && target.parentNode.tagName === "g") {
-        target = target.parentNode; // Promote to group
+        target = target.parentNode;
       }
       selectedElement = target;
       highlightSelection(selectedElement);
@@ -138,7 +149,8 @@ function startDraw(e) {
         canvas.appendChild(t);
       }
       isDrawing = false;
-      break;
+      currentTool = "select";
+      return;
     }
   }
 }
@@ -186,15 +198,18 @@ function dragDraw(e) {
     shadow.setAttribute("y2", y);
     main.setAttribute("x2", x);
     main.setAttribute("y2", y);
+    currentTool = "select";
   }
   else if (currentElement.tagName === "rect") {
     currentElement.setAttribute("width", Math.abs(x - startX));
     currentElement.setAttribute("height", Math.abs(y - startY));
+    currentTool = "select";
   }
   else if (currentElement.tagName === "circle") {
     const dx = x - startX;
     const dy = y - startY;
     currentElement.setAttribute("r", Math.sqrt(dx * dx + dy * dy));
+    currentTool = "select";
   }
 }
 
