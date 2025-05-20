@@ -1,4 +1,4 @@
-// Final fix: dragDraw updates all tools properly again
+// Final polish: arrowhead fix + auto-select after draw
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
 let currentTool = "select";
@@ -113,29 +113,34 @@ function startDraw(e) {
       group.appendChild(main);
       canvas.appendChild(group);
       currentElement = group;
+      selectedElement = group;
       justDrew = true;
       break;
     }
     case "box": {
-      currentElement = document.createElementNS(svgNS, "rect");
-      currentElement.setAttribute("x", x);
-      currentElement.setAttribute("y", y);
-      currentElement.setAttribute("width", 0);
-      currentElement.setAttribute("height", 0);
-      currentElement.setAttribute("fill", "#4444ff33");
-      currentElement.setAttribute("stroke", "blue");
-      canvas.appendChild(currentElement);
+      const rect = document.createElementNS(svgNS, "rect");
+      rect.setAttribute("x", x);
+      rect.setAttribute("y", y);
+      rect.setAttribute("width", 0);
+      rect.setAttribute("height", 0);
+      rect.setAttribute("fill", "#4444ff33");
+      rect.setAttribute("stroke", "blue");
+      canvas.appendChild(rect);
+      currentElement = rect;
+      selectedElement = rect;
       justDrew = true;
       break;
     }
     case "circle": {
-      currentElement = document.createElementNS(svgNS, "circle");
-      currentElement.setAttribute("cx", x);
-      currentElement.setAttribute("cy", y);
-      currentElement.setAttribute("r", 0);
-      currentElement.setAttribute("fill", "#00aa0033");
-      currentElement.setAttribute("stroke", "green");
-      canvas.appendChild(currentElement);
+      const circ = document.createElementNS(svgNS, "circle");
+      circ.setAttribute("cx", x);
+      circ.setAttribute("cy", y);
+      circ.setAttribute("r", 0);
+      circ.setAttribute("fill", "#00aa0033");
+      circ.setAttribute("stroke", "green");
+      canvas.appendChild(circ);
+      currentElement = circ;
+      selectedElement = circ;
       justDrew = true;
       break;
     }
@@ -148,10 +153,13 @@ function startDraw(e) {
         t.setAttribute("fill", "black");
         t.textContent = text;
         canvas.appendChild(t);
+        selectedElement = t;
+        highlightSelection(t);
         justDrew = true;
       }
       isDrawing = false;
       currentElement = null;
+      currentTool = "select";
       return;
     }
   }
@@ -185,11 +193,57 @@ function dragDraw(e) {
 canvas.addEventListener("mouseup", () => {
   isDrawing = false;
   currentElement = null;
-  if (justDrew) currentTool = "select";
+  if (justDrew && selectedElement) {
+    highlightSelection(selectedElement);
+    currentTool = "select";
+  }
 });
 
 canvas.addEventListener("touchend", () => {
   isDrawing = false;
   currentElement = null;
-  if (justDrew) currentTool = "select";
+  if (justDrew && selectedElement) {
+    highlightSelection(selectedElement);
+    currentTool = "select";
+  }
 });
+
+function clearSelection() {
+  if (selectedElement) {
+    if (selectedElement.tagName === "g") {
+      const main = selectedElement.querySelector("line:last-child");
+      const original = main.getAttribute("data-original-stroke") || "black";
+      main.setAttribute("stroke", original);
+    } else {
+      selectedElement.removeAttribute("stroke");
+    }
+    selectedElement = null;
+  }
+}
+
+function highlightSelection(el) {
+  clearSelection();
+  if (el.tagName === "g") {
+    const main = el.querySelector("line:last-child");
+    main.setAttribute("stroke", "orange");
+  } else {
+    el.setAttribute("stroke", "orange");
+  }
+  selectedElement = el;
+}
+
+// Ensure arrowhead marker is first in SVG
+const defs = document.createElementNS(svgNS, "defs");
+const marker = document.createElementNS(svgNS, "marker");
+marker.setAttribute("id", "arrowhead");
+marker.setAttribute("markerWidth", "10");
+marker.setAttribute("markerHeight", "7");
+marker.setAttribute("refX", "10");
+marker.setAttribute("refY", "3.5");
+marker.setAttribute("orient", "auto");
+const path = document.createElementNS(svgNS, "path");
+path.setAttribute("d", "M0,0 L10,3.5 L0,7 Z");
+path.setAttribute("fill", "gray");
+marker.appendChild(path);
+defs.appendChild(marker);
+canvas.insertBefore(defs, canvas.firstChild);
