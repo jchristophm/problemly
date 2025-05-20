@@ -1,4 +1,4 @@
-// Final fix: delete button + auto-select after draw
+// Fix: switch to select only after drawing ends (not before)
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
 let currentTool = "select";
@@ -198,85 +198,26 @@ function dragDraw(e) {
     shadow.setAttribute("y2", y);
     main.setAttribute("x2", x);
     main.setAttribute("y2", y);
-    currentTool = "select";
   }
   else if (currentElement.tagName === "rect") {
     currentElement.setAttribute("width", Math.abs(x - startX));
     currentElement.setAttribute("height", Math.abs(y - startY));
-    currentTool = "select";
   }
   else if (currentElement.tagName === "circle") {
     const dx = x - startX;
     const dy = y - startY;
     currentElement.setAttribute("r", Math.sqrt(dx * dx + dy * dy));
-    currentTool = "select";
   }
 }
 
 canvas.addEventListener("mouseup", () => {
   isDrawing = false;
   currentElement = null;
+  currentTool = "select";
 });
+
 canvas.addEventListener("touchend", () => {
   isDrawing = false;
   currentElement = null;
+  currentTool = "select";
 });
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Delete" && selectedElement) {
-    if (selectedElement.parentNode.tagName === "g") {
-      selectedElement.parentNode.remove();
-    } else {
-      canvas.removeChild(selectedElement);
-    }
-    selectedElement = null;
-  }
-});
-
-function clearSelection() {
-  if (selectedElement) {
-    if (selectedElement.tagName === "g") {
-      const main = selectedElement.querySelector("line:last-child");
-      const original = main.getAttribute("data-original-stroke") || "black";
-      main.setAttribute("stroke", original);
-    } else {
-      selectedElement.removeAttribute("stroke");
-    }
-    selectedElement = null;
-  }
-}
-
-function highlightSelection(el) {
-  if (el.tagName === "g") {
-    const main = el.querySelector("line:last-child");
-    main.setAttribute("stroke", "orange");
-  } else {
-    el.setAttribute("stroke", "orange");
-  }
-}
-
-document.getElementById("export").addEventListener("click", () => {
-  const svgData = canvas.outerHTML;
-  const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "diagram.svg";
-  link.click();
-});
-
-// Arrowhead marker definition
-const defs = document.createElementNS(svgNS, "defs");
-const marker = document.createElementNS(svgNS, "marker");
-marker.setAttribute("id", "arrowhead");
-marker.setAttribute("markerWidth", "10");
-marker.setAttribute("markerHeight", "7");
-marker.setAttribute("refX", "10");
-marker.setAttribute("refY", "3.5");
-marker.setAttribute("orient", "auto");
-const path = document.createElementNS(svgNS, "path");
-path.setAttribute("d", "M0,0 L10,3.5 L0,7 Z");
-path.setAttribute("fill", "gray");
-marker.appendChild(path);
-defs.appendChild(marker);
-canvas.appendChild(defs);
