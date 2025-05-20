@@ -1,4 +1,4 @@
-// Final drawing fix: correctly delay tool switch until draw finishes
+// Final fix: dragDraw updates all tools properly again
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
 let currentTool = "select";
@@ -30,11 +30,7 @@ document.getElementById("toolbar").addEventListener("click", (e) => {
 
 document.getElementById("delete").addEventListener("click", () => {
   if (selectedElement) {
-    if (selectedElement.tagName === "g") {
-      canvas.removeChild(selectedElement);
-    } else {
-      canvas.removeChild(selectedElement);
-    }
+    canvas.removeChild(selectedElement);
     selectedElement = null;
   }
 });
@@ -152,11 +148,37 @@ function startDraw(e) {
         t.setAttribute("fill", "black");
         t.textContent = text;
         canvas.appendChild(t);
+        justDrew = true;
       }
       isDrawing = false;
-      currentTool = "select";
+      currentElement = null;
       return;
     }
+  }
+}
+
+canvas.addEventListener("mousemove", dragDraw);
+canvas.addEventListener("touchmove", dragDraw);
+
+function dragDraw(e) {
+  if (!isDrawing || !currentElement) return;
+  const { x, y } = getCoords(e);
+
+  if (currentElement.tagName === "g") {
+    const [shadow, main] = currentElement.querySelectorAll("line");
+    shadow.setAttribute("x2", x);
+    shadow.setAttribute("y2", y);
+    main.setAttribute("x2", x);
+    main.setAttribute("y2", y);
+  } else if (currentElement.tagName === "rect") {
+    currentElement.setAttribute("width", Math.abs(x - startX));
+    currentElement.setAttribute("height", Math.abs(y - startY));
+    currentElement.setAttribute("x", Math.min(x, startX));
+    currentElement.setAttribute("y", Math.min(y, startY));
+  } else if (currentElement.tagName === "circle") {
+    const dx = x - startX;
+    const dy = y - startY;
+    currentElement.setAttribute("r", Math.sqrt(dx * dx + dy * dy));
   }
 }
 
