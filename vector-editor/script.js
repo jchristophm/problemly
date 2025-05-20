@@ -1,4 +1,4 @@
-// Updated script.js with selection + drag
+// Updated script.js with fat invisible stroke zones for all lines
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
 let currentTool = "select";
@@ -69,6 +69,8 @@ function startDraw(e) {
       currentElement.setAttribute("x2", x);
       currentElement.setAttribute("y2", y);
       currentElement.setAttribute("stroke", currentTool === "vector" ? "red" : "black");
+      currentElement.setAttribute("stroke-width", "10");
+      currentElement.setAttribute("stroke-opacity", "0.1");
       if (currentTool === "vector") {
         currentElement.setAttribute("marker-end", "url(#arrowhead)");
       }
@@ -204,6 +206,8 @@ function draw1DAxis() {
   axis.setAttribute("x2", "300");
   axis.setAttribute("y2", "240");
   axis.setAttribute("stroke", "gray");
+  axis.setAttribute("stroke-width", "10");
+  axis.setAttribute("stroke-opacity", "0.1");
   axis.setAttribute("marker-end", "url(#arrowhead)");
   canvas.appendChild(axis);
   const label = document.createElementNS(svgNS, "text");
@@ -222,6 +226,8 @@ function draw2DAxis() {
   yAxis.setAttribute("x2", "160");
   yAxis.setAttribute("y2", "460");
   yAxis.setAttribute("stroke", "gray");
+  yAxis.setAttribute("stroke-width", "10");
+  yAxis.setAttribute("stroke-opacity", "0.1");
   yAxis.setAttribute("marker-end", "url(#arrowhead)");
   canvas.appendChild(yAxis);
   const label = document.createElementNS(svgNS, "text");
