@@ -1,4 +1,4 @@
-// Updated script.js with fat invisible stroke zones for all lines
+// Updated script.js: slimmed line hitboxes, removed coordinate system tools
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
 let currentTool = "select";
@@ -69,8 +69,8 @@ function startDraw(e) {
       currentElement.setAttribute("x2", x);
       currentElement.setAttribute("y2", y);
       currentElement.setAttribute("stroke", currentTool === "vector" ? "red" : "black");
-      currentElement.setAttribute("stroke-width", "10");
-      currentElement.setAttribute("stroke-opacity", "0.1");
+      currentElement.setAttribute("stroke-width", "4");
+      currentElement.setAttribute("stroke-linecap", "round");
       if (currentTool === "vector") {
         currentElement.setAttribute("marker-end", "url(#arrowhead)");
       }
@@ -105,14 +105,6 @@ function startDraw(e) {
         t.textContent = text;
         canvas.appendChild(t);
       }
-      isDrawing = false;
-      break;
-    case "coords1D":
-      draw1DAxis();
-      isDrawing = false;
-      break;
-    case "coords2D":
-      draw2DAxis();
       isDrawing = false;
       break;
   }
@@ -198,45 +190,6 @@ document.getElementById("export").addEventListener("click", () => {
   link.download = "diagram.svg";
   link.click();
 });
-
-function draw1DAxis() {
-  const axis = document.createElementNS(svgNS, "line");
-  axis.setAttribute("x1", "20");
-  axis.setAttribute("y1", "240");
-  axis.setAttribute("x2", "300");
-  axis.setAttribute("y2", "240");
-  axis.setAttribute("stroke", "gray");
-  axis.setAttribute("stroke-width", "10");
-  axis.setAttribute("stroke-opacity", "0.1");
-  axis.setAttribute("marker-end", "url(#arrowhead)");
-  canvas.appendChild(axis);
-  const label = document.createElementNS(svgNS, "text");
-  label.setAttribute("x", "280");
-  label.setAttribute("y", "230");
-  label.textContent = "+x";
-  label.setAttribute("fill", "gray");
-  canvas.appendChild(label);
-}
-
-function draw2DAxis() {
-  draw1DAxis();
-  const yAxis = document.createElementNS(svgNS, "line");
-  yAxis.setAttribute("x1", "160");
-  yAxis.setAttribute("y1", "20");
-  yAxis.setAttribute("x2", "160");
-  yAxis.setAttribute("y2", "460");
-  yAxis.setAttribute("stroke", "gray");
-  yAxis.setAttribute("stroke-width", "10");
-  yAxis.setAttribute("stroke-opacity", "0.1");
-  yAxis.setAttribute("marker-end", "url(#arrowhead)");
-  canvas.appendChild(yAxis);
-  const label = document.createElementNS(svgNS, "text");
-  label.setAttribute("x", "170");
-  label.setAttribute("y", "40");
-  label.textContent = "+y";
-  label.setAttribute("fill", "gray");
-  canvas.appendChild(label);
-}
 
 // Arrowhead marker definition
 const defs = document.createElementNS(svgNS, "defs");
