@@ -1,4 +1,4 @@
-// Fully fixed script.js — correct group selection and vector dragging
+// Final fix: preserve original stroke color when selecting vectors or lines
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
 let currentTool = "select";
@@ -90,9 +90,12 @@ function startDraw(e) {
       shadow.setAttribute("stroke-width", "10");
       shadow.setAttribute("pointer-events", "stroke");
 
-      main.setAttribute("stroke", currentTool === "vector" ? "red" : "black");
+      const color = currentTool === "vector" ? "red" : "black";
+      main.setAttribute("stroke", color);
       main.setAttribute("stroke-width", "2");
       main.setAttribute("stroke-linecap", "round");
+      main.setAttribute("data-original-stroke", color);
+
       if (currentTool === "vector") {
         main.setAttribute("marker-end", "url(#arrowhead)");
       }
@@ -218,8 +221,9 @@ document.addEventListener("keydown", (e) => {
 function clearSelection() {
   if (selectedElement) {
     if (selectedElement.tagName === "g") {
-      const line = selectedElement.querySelector("line:last-child");
-      line.removeAttribute("stroke");
+      const main = selectedElement.querySelector("line:last-child");
+      const original = main.getAttribute("data-original-stroke") || "black";
+      main.setAttribute("stroke", original);
     } else {
       selectedElement.removeAttribute("stroke");
     }
