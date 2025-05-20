@@ -1,4 +1,4 @@
-// Final polish: arrowhead fix + auto-select after draw
+// Final final: fixes for drag after auto-select + one selection at a time
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
 let currentTool = "select";
@@ -155,6 +155,8 @@ function startDraw(e) {
         canvas.appendChild(t);
         selectedElement = t;
         highlightSelection(t);
+        offsetX = 0;
+        offsetY = 0;
         justDrew = true;
       }
       isDrawing = false;
@@ -190,20 +192,62 @@ function dragDraw(e) {
   }
 }
 
-canvas.addEventListener("mouseup", () => {
+canvas.addEventListener("mouseup", (e) => {
   isDrawing = false;
   currentElement = null;
   if (justDrew && selectedElement) {
+    const { x, y } = getCoords(e);
     highlightSelection(selectedElement);
+    if (selectedElement.tagName === "text") {
+      offsetX = 0;
+      offsetY = 0;
+    } else if (selectedElement.tagName === "circle") {
+      offsetX = x - parseFloat(selectedElement.getAttribute("cx"));
+      offsetY = y - parseFloat(selectedElement.getAttribute("cy"));
+    } else if (selectedElement.tagName === "rect") {
+      offsetX = x - parseFloat(selectedElement.getAttribute("x"));
+      offsetY = y - parseFloat(selectedElement.getAttribute("y"));
+    } else if (selectedElement.tagName === "g") {
+      const main = selectedElement.querySelector("line:last-child");
+      dragOffset = {
+        x1: parseFloat(main.getAttribute("x1")),
+        y1: parseFloat(main.getAttribute("y1")),
+        x2: parseFloat(main.getAttribute("x2")),
+        y2: parseFloat(main.getAttribute("y2")),
+        dx: x,
+        dy: y
+      };
+    }
     currentTool = "select";
   }
 });
 
-canvas.addEventListener("touchend", () => {
+canvas.addEventListener("touchend", (e) => {
   isDrawing = false;
   currentElement = null;
   if (justDrew && selectedElement) {
+    const { x, y } = getCoords(e);
     highlightSelection(selectedElement);
+    if (selectedElement.tagName === "text") {
+      offsetX = 0;
+      offsetY = 0;
+    } else if (selectedElement.tagName === "circle") {
+      offsetX = x - parseFloat(selectedElement.getAttribute("cx"));
+      offsetY = y - parseFloat(selectedElement.getAttribute("cy"));
+    } else if (selectedElement.tagName === "rect") {
+      offsetX = x - parseFloat(selectedElement.getAttribute("x"));
+      offsetY = y - parseFloat(selectedElement.getAttribute("y"));
+    } else if (selectedElement.tagName === "g") {
+      const main = selectedElement.querySelector("line:last-child");
+      dragOffset = {
+        x1: parseFloat(main.getAttribute("x1")),
+        y1: parseFloat(main.getAttribute("y1")),
+        x2: parseFloat(main.getAttribute("x2")),
+        y2: parseFloat(main.getAttribute("y2")),
+        dx: x,
+        dy: y
+      };
+    }
     currentTool = "select";
   }
 });
@@ -232,7 +276,6 @@ function highlightSelection(el) {
   selectedElement = el;
 }
 
-// Ensure arrowhead marker is first in SVG
 const defs = document.createElementNS(svgNS, "defs");
 const marker = document.createElementNS(svgNS, "marker");
 marker.setAttribute("id", "arrowhead");
