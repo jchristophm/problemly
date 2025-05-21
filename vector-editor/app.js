@@ -127,12 +127,14 @@ window.addArrow = function () {
   arrow._originalStroke = arrow.stroke();
 
   const handleStart = createHandle(pts[0], pts[1], (x, y) => {
-    arrow.points([x, y, arrow.points()[2], arrow.points()[3]]);
+    const oldPts = arrow.points();
+    arrow.points([x, y, oldPts[2], oldPts[3]]);
     layer.batchDraw();
   });
 
   const handleEnd = createHandle(pts[2], pts[3], (x, y) => {
-    arrow.points([arrow.points()[0], arrow.points()[1], x, y]);
+    const oldPts = arrow.points();
+    arrow.points([oldPts[0], oldPts[1], x, y]);
     layer.batchDraw();
   });
 
@@ -140,21 +142,33 @@ window.addArrow = function () {
     deselect();
     selectedShape = arrow;
     arrow.stroke('orange');
-    arrow.draggable(false); // disable drag when manipulating endpoints
+    arrow.draggable(false); // disable dragging while endpoints are active
     arrow._extraHandles = [handleStart, handleEnd];
+
+    // Position handles at arrow ends
+    const [x1, y1, x2, y2] = arrow.points();
+    handleStart.position({ x: x1, y: y1 });
+    handleEnd.position({ x: x2, y: y2 });
+
+    // Add handles above arrow
     layer.add(handleStart, handleEnd);
+    handleStart.moveToTop();
+    handleEnd.moveToTop();
     layer.batchDraw();
   });
 
   arrow.on('dragend', () => {
-    // update endpoint handles on drag end
-    const pts = arrow.points();
-    handleStart.position({ x: pts[0], y: pts[1] });
-    handleEnd.position({ x: pts[2], y: pts[3] });
-    layer.batchDraw();
+    const [x1, y1, x2, y2] = arrow.points();
+    if (arrow._extraHandles) {
+      arrow._extraHandles[0].position({ x: x1, y: y1 });
+      arrow._extraHandles[1].position({ x: x2, y: y2 });
+      layer.batchDraw();
+    }
   });
 
-  layer.add(arrow).draw();
+  layer.add(arrow);
+  arrow.moveToBottom(); // make sure handles appear on top later
+  layer.draw();
 };
 
 // ============== Utility ==============
