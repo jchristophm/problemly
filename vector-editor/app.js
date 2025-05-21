@@ -120,53 +120,40 @@ window.addArrow = function () {
     strokeWidth: 3,
     pointerLength: 10,
     pointerWidth: 10,
-    draggable: true,
-    hitStrokeWidth: 20
+    hitStrokeWidth: 20,
+    draggable: true
   });
+
+  arrow._originalStroke = arrow.stroke();
 
   const handleStart = createHandle(pts[0], pts[1], (x, y) => {
     arrow.points([x, y, arrow.points()[2], arrow.points()[3]]);
-    snapArrow(arrow);
     layer.batchDraw();
   });
 
   const handleEnd = createHandle(pts[2], pts[3], (x, y) => {
     arrow.points([arrow.points()[0], arrow.points()[1], x, y]);
-    snapArrow(arrow);
     layer.batchDraw();
   });
-
-  arrow._originalStroke = arrow.stroke();
 
   arrow.on('click tap', () => {
     deselect();
     selectedShape = arrow;
     arrow.stroke('orange');
+    arrow.draggable(false); // disable drag when manipulating endpoints
     arrow._extraHandles = [handleStart, handleEnd];
     layer.add(handleStart, handleEnd);
     layer.batchDraw();
   });
 
-  arrow.on('dragmove', () => {
-    const dx = arrow.x();
-    const dy = arrow.y();
-
-    arrow.points(arrow.points().map((val, i) =>
-      i % 2 === 0 ? snap(val) : snap(val)
-    ));
-    handleStart.x(arrow.points()[0]);
-    handleStart.y(arrow.points()[1]);
-    handleEnd.x(arrow.points()[2]);
-    handleEnd.y(arrow.points()[3]);
-  });
-
   arrow.on('dragend', () => {
-    arrow.position({ x: 0, y: 0 }); // reset transform
-    snapArrow(arrow);
+    // update endpoint handles on drag end
+    const pts = arrow.points();
+    handleStart.position({ x: pts[0], y: pts[1] });
+    handleEnd.position({ x: pts[2], y: pts[3] });
     layer.batchDraw();
   });
 
-  snapArrow(arrow);
   layer.add(arrow).draw();
 };
 
@@ -230,6 +217,7 @@ function deselect() {
       selectedShape._extraHandles = [];
     }
     selectedShape.stroke(selectedShape._originalStroke || 'black');
+    selectedShape.draggable(true); // re-enable drag after deselect
     selectedShape = null;
     layer.batchDraw();
   }
