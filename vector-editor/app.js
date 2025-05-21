@@ -69,73 +69,90 @@ window.addText = function () {
 };
 
 window.addLine = function () {
-  const points = [60, 60, 160, 160];
+  const pts = [60, 60, 160, 160];
+
   const line = new Konva.Line({
-    points,
+    points: pts,
     stroke: 'black',
-    strokeWidth: 2,
-    hitStrokeWidth: 20
+    strokeWidth: 2
   });
 
-  const p1 = createHandle(points[0], points[1], (x, y) => {
+  const hitbox = new Konva.Line({
+    points: pts,
+    strokeWidth: 20,
+    stroke: 'rgba(0,0,0,0.001)',
+    listening: true
+  });
+
+  const p1 = createHandle(pts[0], pts[1], (x, y) => {
     line.points([x, y, line.points()[2], line.points()[3]]);
+    hitbox.points(line.points());
     snapLine(line);
     layer.batchDraw();
   });
 
-  const p2 = createHandle(points[2], points[3], (x, y) => {
+  const p2 = createHandle(pts[2], pts[3], (x, y) => {
     line.points([line.points()[0], line.points()[1], x, y]);
+    hitbox.points(line.points());
     snapLine(line);
     layer.batchDraw();
   });
 
-  line.on('click tap', () => {
+  hitbox.on('click tap', () => {
     deselect();
     selectedShape = line;
+    line.stroke('orange');
     selectedShape._extraHandles = [p1, p2];
-    selectedShape.stroke('orange');
     layer.batchDraw();
   });
 
   snapLine(line);
-  layer.add(line, p1, p2).draw();
+  layer.add(line, hitbox, p1, p2).draw();
 };
 
 window.addArrow = function () {
-  const points = [80, 80, 180, 180];
+  const pts = [80, 80, 180, 180];
 
   const arrow = new Konva.Arrow({
-    points,
+    points: pts,
     stroke: 'red',
     fill: 'red',
     strokeWidth: 3,
     pointerLength: 10,
-    pointerWidth: 10,
-    hitStrokeWidth: 20
+    pointerWidth: 10
   });
 
-  const p1 = createHandle(points[0], points[1], (x, y) => {
+  const hitbox = new Konva.Line({
+    points: pts,
+    strokeWidth: 20,
+    stroke: 'rgba(0,0,0,0.001)',
+    listening: true
+  });
+
+  const p1 = createHandle(pts[0], pts[1], (x, y) => {
     arrow.points([x, y, arrow.points()[2], arrow.points()[3]]);
+    hitbox.points(arrow.points());
     snapArrow(arrow);
     layer.batchDraw();
   });
 
-  const p2 = createHandle(points[2], points[3], (x, y) => {
+  const p2 = createHandle(pts[2], pts[3], (x, y) => {
     arrow.points([arrow.points()[0], arrow.points()[1], x, y]);
+    hitbox.points(arrow.points());
     snapArrow(arrow);
     layer.batchDraw();
   });
 
-  arrow.on('click tap', () => {
+  hitbox.on('click tap', () => {
     deselect();
     selectedShape = arrow;
+    arrow.stroke('orange');
     selectedShape._extraHandles = [p1, p2];
-    selectedShape.stroke('orange');
     layer.batchDraw();
   });
 
   snapArrow(arrow);
-  layer.add(arrow, p1, p2).draw();
+  layer.add(arrow, hitbox, p1, p2).draw();
 };
 
 // ============== Utility ==============
