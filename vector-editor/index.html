@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8" />
   <title>SVG Editor</title>
   <style>
     #canvas {
@@ -42,7 +42,7 @@ let selectedElement = null;
 let offsetX = 0, offsetY = 0;
 let dragOffset = {};
 
-// Unique marker ID
+// Unique arrowhead marker
 const markerId = `arrowhead-${Date.now()}`;
 const defs = document.createElementNS(svgNS, "defs");
 const marker = document.createElementNS(svgNS, "marker");
@@ -83,7 +83,11 @@ document.getElementById("delete").addEventListener("click", () => {
   }
 });
 
-canvas.addEventListener("mousedown", startDraw);
+// FIX: Prevent mouse default interference
+canvas.addEventListener("mousedown", (e) => {
+  if (e.cancelable) e.preventDefault();
+  startDraw(e);
+});
 canvas.addEventListener("touchstart", startDraw, { passive: false });
 
 function startDraw(e) {
@@ -93,6 +97,9 @@ function startDraw(e) {
   startY = y;
   currentElement = null;
   wasMoved = false;
+
+  // FIX: Always clear selection first
+  clearSelection();
 
   if (currentTool === "select") {
     isDrawing = false;
@@ -266,9 +273,16 @@ function endDraw() {
   isDrawing = false;
   currentElement = null;
   wasMoved = false;
-  if (selectedElement) highlightSelection(selectedElement);
-  if (currentTool !== "select") currentTool = "select";
-  else selectedElement = null;
+
+  // FIX: Always clear selection after draw
+  if (currentTool !== "select") {
+    clearSelection();
+    currentTool = "select";
+  } else if (selectedElement) {
+    highlightSelection(selectedElement);
+  } else {
+    clearSelection();
+  }
 }
 
 canvas.addEventListener("mouseup", endDraw);
