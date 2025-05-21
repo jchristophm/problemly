@@ -113,7 +113,6 @@ window.addLine = function () {
 window.addArrow = function () {
   const pts = [80, 80, 180, 180];
 
-  // actual visual arrow
   const arrow = new Konva.Arrow({
     points: pts,
     stroke: 'red',
@@ -121,70 +120,54 @@ window.addArrow = function () {
     strokeWidth: 3,
     pointerLength: 10,
     pointerWidth: 10,
-    listening: false  // important: don't intercept clicks
+    draggable: true,
+    hitStrokeWidth: 20
   });
-
-  // invisible rect used for dragging and clicking
-  const hitZone = new Konva.Rect({
-    x: Math.min(pts[0], pts[2]) - 10,
-    y: Math.min(pts[1], pts[3]) - 10,
-    width: Math.abs(pts[2] - pts[0]) + 20,
-    height: Math.abs(pts[3] - pts[1]) + 20,
-    fill: 'rgba(0,0,0,0.001)',
-    draggable: true
-  });
-
-  function updatePositions() {
-    const p1 = [handleStart.x(), handleStart.y()];
-    const p2 = [handleEnd.x(), handleEnd.y()];
-    arrow.points([...p1, ...p2]);
-    hitZone.position({
-      x: Math.min(p1[0], p2[0]) - 10,
-      y: Math.min(p1[1], p2[1]) - 10
-    });
-    hitZone.size({
-      width: Math.abs(p2[0] - p1[0]) + 20,
-      height: Math.abs(p2[1] - p1[1]) + 20
-    });
-    layer.batchDraw();
-  }
 
   const handleStart = createHandle(pts[0], pts[1], (x, y) => {
-    updatePositions();
+    arrow.points([x, y, arrow.points()[2], arrow.points()[3]]);
+    snapArrow(arrow);
+    layer.batchDraw();
   });
 
   const handleEnd = createHandle(pts[2], pts[3], (x, y) => {
-    updatePositions();
-  });
-
-  hitZone.on('click tap', () => {
-    deselect();
-    selectedShape = hitZone;
-    hitZone._extraHandles = [handleStart, handleEnd];
-    arrow.stroke('orange');
+    arrow.points([arrow.points()[0], arrow.points()[1], x, y]);
+    snapArrow(arrow);
     layer.batchDraw();
   });
 
-  hitZone.on('dragmove', () => {
-    const dx = hitZone.x() - snap(hitZone.x());
-    const dy = hitZone.y() - snap(hitZone.y());
+  arrow._originalStroke = arrow.stroke();
 
-    handleStart.x(handleStart.x() + dx);
-    handleStart.y(handleStart.y() + dy);
-    handleEnd.x(handleEnd.x() + dx);
-    handleEnd.y(handleEnd.y() + dy);
-
-    updatePositions();
-
-    // Snap hitZone back to grid
-    hitZone.position({
-      x: snap(hitZone.x()),
-      y: snap(hitZone.y())
-    });
+  arrow.on('click tap', () => {
+    deselect();
+    selectedShape = arrow;
+    arrow.stroke('orange');
+    arrow._extraHandles = [handleStart, handleEnd];
+    layer.add(handleStart, handleEnd);
+    layer.batchDraw();
   });
 
-  updatePositions();
-  layer.add(arrow, hitZone, handleStart, handleEnd).draw();
+  arrow.on('dragmove', () => {
+    const dx = arrow.x();
+    const dy = arrow.y();
+
+    arrow.points(arrow.points().map((val, i) =>
+      i % 2 === 0 ? snap(val) : snap(val)
+    ));
+    handleStart.x(arrow.points()[0]);
+    handleStart.y(arrow.points()[1]);
+    handleEnd.x(arrow.points()[2]);
+    handleEnd.y(arrow.points()[3]);
+  });
+
+  arrow.on('dragend', () => {
+    arrow.position({ x: 0, y: 0 }); // reset transform
+    snapArrow(arrow);
+    layer.batchDraw();
+  });
+
+  snapArrow(arrow);
+  layer.add(arrow).draw();
 };
 
 // ============== Utility ==============
@@ -246,6 +229,7 @@ function deselect() {
       selectedShape._extraHandles.forEach(h => h.destroy());
       selectedShape._extraHandles = [];
     }
+    selectedShape.stroke(selectedShape._originalStroke || 'black');
     selectedShape = null;
     layer.batchDraw();
   }
