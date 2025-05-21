@@ -1,117 +1,302 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Minimal Vector Editor</title>
+  <meta charset="utf-8">
+  <title>SVG Editor</title>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; }
-    #toolbar {
-      display: flex; gap: 4px; padding: 8px;
-      justify-content: center; background: #eee;
+    #canvas {
+      border: 1px solid #ccc;
+      touch-action: none;
     }
-    #toolbar button { font-size: 18px; padding: 6px 10px; }
-    #drawing { border: 1px solid #ccc; display: block; margin: auto; touch-action: none; }
+    #toolbar {
+      margin-top: 10px;
+    }
+    #toolbar button {
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
 
+<svg id="canvas" width="360" height="360"></svg>
 <div id="toolbar">
-  <button data-tool="select">🖱️</button>
-  <button data-tool="vector">➡️</button>
-  <button data-tool="line">📏</button>
-  <button data-tool="rect">⬛</button>
-  <button data-tool="circle">⚪</button>
-  <button data-tool="text">🔤</button>
+  <button data-tool="select">Select</button>
+  <button data-tool="line">Line</button>
+  <button data-tool="vector">Vector</button>
+  <button data-tool="box">Box</button>
+  <button data-tool="circle">Circle</button>
+  <button data-tool="text">Text</button>
+  <button id="delete">Delete</button>
 </div>
 
-<svg id="drawing" width="360" height="480"></svg>
-
-<!-- SVG.js -->
-<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.2/dist/svg.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.draggable.js@3.0.3/dist/svg.draggable.min.js"></script>
-
 <script>
-  const draw = SVG().addTo('#drawing').size(360, 480);
-  let currentTool = 'select';
-  let start, temp;
+const svgNS = "http://www.w3.org/2000/svg";
+const canvas = document.getElementById("canvas");
+let currentTool = "select";
 
-  // Create arrowhead
-  draw.defs().marker(10, 10, function(add) {
-    add.path('M0,0 L10,5 L0,10 Z').fill('#444');
-    this.ref(10, 5).attr({ id: 'arrowhead', orient: 'auto', markerWidth: 6, markerHeight: 6 });
-  });
+let isDrawing = false;
+let wasMoved = false;
+let startX = 0, startY = 0;
+let currentElement = null;
+let selectedElement = null;
+let offsetX = 0, offsetY = 0;
+let dragOffset = {};
 
-  // Tool switching
-  document.querySelectorAll('#toolbar button').forEach(btn =>
-    btn.onclick = () => currentTool = btn.dataset.tool
-  );
+// Unique marker ID
+const markerId = `arrowhead-${Date.now()}`;
+const defs = document.createElementNS(svgNS, "defs");
+const marker = document.createElementNS(svgNS, "marker");
+marker.setAttribute("id", markerId);
+marker.setAttribute("markerWidth", "10");
+marker.setAttribute("markerHeight", "7");
+marker.setAttribute("refX", "10");
+marker.setAttribute("refY", "3.5");
+marker.setAttribute("orient", "auto");
+const path = document.createElementNS(svgNS, "path");
+path.setAttribute("d", "M0,0 L10,3.5 L0,7 Z");
+path.setAttribute("fill", "gray");
+marker.appendChild(path);
+defs.appendChild(marker);
+canvas.insertBefore(defs, canvas.firstChild);
 
-  // Drawing logic
-  draw.on('mousedown touchstart', function(e) {
-    if (currentTool === 'select') return;
+function getCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    x: clientX - rect.left,
+    y: clientY - rect.top
+  };
+}
 
-    const { x, y } = getLocalPoint(e);
-    start = { x, y };
-
-    switch (currentTool) {
-      case 'line':
-        temp = draw.line(x, y, x, y).stroke({ width: 2, color: '#000' });
-        break;
-      case 'vector':
-        temp = draw.line(x, y, x, y)
-          .stroke({ width: 2, color: '#f00' })
-          .marker('end', draw.findOne('#arrowhead'));
-        break;
-      case 'rect':
-        temp = draw.rect(0, 0).move(x, y).fill('#44f4').stroke({ color: '#00f' });
-        break;
-      case 'circle':
-        temp = draw.circle(0).move(x, y).fill('#0f03').stroke({ color: '#080' });
-        break;
-      case 'text':
-        const label = prompt("Enter label text:");
-        if (label) {
-          temp = draw.text(label).move(x, y).font({ size: 16, anchor: 'start' });
-          temp.draggable();
-        }
-        currentTool = 'select';
-        return;
-    }
-  });
-
-  draw.on('mousemove touchmove', function(e) {
-    if (!temp || currentTool === 'select') return;
-    const { x, y } = getLocalPoint(e);
-
-    switch (currentTool) {
-      case 'line':
-      case 'vector':
-        temp.plot([start.x, start.y, x, y]);
-        break;
-      case 'rect':
-        temp.size(Math.abs(x - start.x), Math.abs(y - start.y))
-            .move(Math.min(x, start.x), Math.min(y, start.y));
-        break;
-      case 'circle':
-        const r = Math.sqrt((x - start.x) ** 2 + (y - start.y) ** 2);
-        temp.radius(r).center(start.x, start.y);
-        break;
-    }
-  });
-
-  draw.on('mouseup touchend', function() {
-    if (temp) {
-      temp.draggable(); // allow move after draw
-      temp = null;
-      currentTool = 'select'; // return to move mode
-    }
-  });
-
-  function getLocalPoint(e) {
-    const point = draw.point(e.touches ? e.touches[0].clientX : e.clientX, e.touches ? e.touches[0].clientY : e.clientY);
-    return { x: point.x, y: point.y };
+document.getElementById("toolbar").addEventListener("click", (e) => {
+  if (e.target.dataset.tool) {
+    currentTool = e.target.dataset.tool;
+    clearSelection();
   }
+});
+
+document.getElementById("delete").addEventListener("click", () => {
+  if (selectedElement) {
+    canvas.removeChild(selectedElement);
+    selectedElement = null;
+  }
+});
+
+canvas.addEventListener("mousedown", startDraw);
+canvas.addEventListener("touchstart", startDraw, { passive: false });
+
+function startDraw(e) {
+  if (e.cancelable) e.preventDefault();
+  const { x, y } = getCoords(e);
+  startX = x;
+  startY = y;
+  currentElement = null;
+  wasMoved = false;
+
+  if (currentTool === "select") {
+    isDrawing = false;
+    let target = e.target.closest("g, line, rect, circle, text");
+    if (target && target !== canvas) {
+      if (target.tagName !== "g" && target.parentNode.tagName === "g") {
+        target = target.parentNode;
+      }
+      selectedElement = target;
+      highlightSelection(target);
+
+      if (target.tagName === "text") {
+        offsetX = x - parseFloat(target.getAttribute("x"));
+        offsetY = y - parseFloat(target.getAttribute("y"));
+      } else if (target.tagName === "circle") {
+        offsetX = x - parseFloat(target.getAttribute("cx"));
+        offsetY = y - parseFloat(target.getAttribute("cy"));
+      } else if (target.tagName === "rect") {
+        offsetX = x - parseFloat(target.getAttribute("x"));
+        offsetY = y - parseFloat(target.getAttribute("y"));
+      } else if (target.tagName === "g") {
+        const main = target.querySelector("line:last-child");
+        dragOffset = {
+          x1: parseFloat(main.getAttribute("x1")),
+          y1: parseFloat(main.getAttribute("y1")),
+          x2: parseFloat(main.getAttribute("x2")),
+          y2: parseFloat(main.getAttribute("y2")),
+          dx: x,
+          dy: y
+        };
+      }
+    } else {
+      clearSelection();
+    }
+    return;
+  }
+
+  isDrawing = true;
+
+  switch (currentTool) {
+    case "vector":
+    case "line": {
+      const group = document.createElementNS(svgNS, "g");
+      const shadow = document.createElementNS(svgNS, "line");
+      const main = document.createElementNS(svgNS, "line");
+      [shadow, main].forEach(line => {
+        line.setAttribute("x1", x);
+        line.setAttribute("y1", y);
+        line.setAttribute("x2", x);
+        line.setAttribute("y2", y);
+      });
+      shadow.setAttribute("stroke", "transparent");
+      shadow.setAttribute("stroke-width", "10");
+      shadow.setAttribute("pointer-events", "stroke");
+      const color = currentTool === "vector" ? "red" : "black";
+      main.setAttribute("stroke", color);
+      main.setAttribute("stroke-width", "2");
+      main.setAttribute("stroke-linecap", "round");
+      main.setAttribute("data-original-stroke", color);
+      if (currentTool === "vector") main.setAttribute("marker-end", `url(#${markerId})`);
+      group.appendChild(shadow);
+      group.appendChild(main);
+      canvas.appendChild(group);
+      currentElement = group;
+      selectedElement = group;
+      break;
+    }
+    case "box": {
+      const rect = document.createElementNS(svgNS, "rect");
+      rect.setAttribute("x", x);
+      rect.setAttribute("y", y);
+      rect.setAttribute("width", 0);
+      rect.setAttribute("height", 0);
+      rect.setAttribute("fill", "#4444ff33");
+      rect.setAttribute("stroke", "blue");
+      canvas.appendChild(rect);
+      currentElement = rect;
+      selectedElement = rect;
+      break;
+    }
+    case "circle": {
+      const circ = document.createElementNS(svgNS, "circle");
+      circ.setAttribute("cx", x);
+      circ.setAttribute("cy", y);
+      circ.setAttribute("r", 0);
+      circ.setAttribute("fill", "#00aa0033");
+      circ.setAttribute("stroke", "green");
+      canvas.appendChild(circ);
+      currentElement = circ;
+      selectedElement = circ;
+      break;
+    }
+    case "text": {
+      const text = prompt("Enter label text:");
+      if (text) {
+        const t = document.createElementNS(svgNS, "text");
+        t.setAttribute("x", x);
+        t.setAttribute("y", y);
+        t.setAttribute("fill", "black");
+        t.textContent = text;
+        canvas.appendChild(t);
+        selectedElement = t;
+        highlightSelection(t);
+        offsetX = 0;
+        offsetY = 0;
+      }
+      isDrawing = false;
+      currentElement = null;
+      currentTool = "select";
+      return;
+    }
+  }
+}
+
+canvas.addEventListener("mousemove", dragDraw);
+canvas.addEventListener("touchmove", dragDraw, { passive: false });
+
+function dragDraw(e) {
+  if (e.cancelable) e.preventDefault();
+  const { x, y } = getCoords(e);
+  wasMoved = true;
+
+  if (currentTool === "select" && selectedElement) {
+    if (selectedElement.tagName === "text") {
+      selectedElement.setAttribute("x", x - offsetX);
+      selectedElement.setAttribute("y", y - offsetY);
+    } else if (selectedElement.tagName === "circle") {
+      selectedElement.setAttribute("cx", x - offsetX);
+      selectedElement.setAttribute("cy", y - offsetY);
+    } else if (selectedElement.tagName === "rect") {
+      selectedElement.setAttribute("x", x - offsetX);
+      selectedElement.setAttribute("y", y - offsetY);
+    } else if (selectedElement.tagName === "g") {
+      const [shadow, main] = selectedElement.querySelectorAll("line");
+      const dx = x - dragOffset.dx;
+      const dy = y - dragOffset.dy;
+      [shadow, main].forEach(line => {
+        line.setAttribute("x1", dragOffset.x1 + dx);
+        line.setAttribute("y1", dragOffset.y1 + dy);
+        line.setAttribute("x2", dragOffset.x2 + dx);
+        line.setAttribute("y2", dragOffset.y2 + dy);
+      });
+    }
+    return;
+  }
+
+  if (!isDrawing || !currentElement) return;
+
+  if (currentElement.tagName === "g") {
+    const [shadow, main] = currentElement.querySelectorAll("line");
+    shadow.setAttribute("x2", x);
+    shadow.setAttribute("y2", y);
+    main.setAttribute("x2", x);
+    main.setAttribute("y2", y);
+  } else if (currentElement.tagName === "rect") {
+    currentElement.setAttribute("width", Math.abs(x - startX));
+    currentElement.setAttribute("height", Math.abs(y - startY));
+    currentElement.setAttribute("x", Math.min(x, startX));
+    currentElement.setAttribute("y", Math.min(y, startY));
+  } else if (currentElement.tagName === "circle") {
+    const dx = x - startX;
+    const dy = y - startY;
+    currentElement.setAttribute("r", Math.sqrt(dx * dx + dy * dy));
+  }
+}
+
+function endDraw() {
+  if (isDrawing && !wasMoved && currentElement) {
+    canvas.removeChild(currentElement);
+  }
+  isDrawing = false;
+  currentElement = null;
+  wasMoved = false;
+  if (selectedElement) highlightSelection(selectedElement);
+  if (currentTool !== "select") currentTool = "select";
+  else selectedElement = null;
+}
+
+canvas.addEventListener("mouseup", endDraw);
+canvas.addEventListener("touchend", endDraw);
+
+function clearSelection() {
+  if (selectedElement) {
+    if (selectedElement.tagName === "g") {
+      const main = selectedElement.querySelector("line:last-child");
+      const original = main?.getAttribute("data-original-stroke") || "black";
+      main?.setAttribute("stroke", original);
+    } else {
+      selectedElement.removeAttribute("stroke");
+    }
+    selectedElement = null;
+  }
+}
+
+function highlightSelection(el) {
+  clearSelection();
+  if (el.tagName === "g") {
+    const main = el.querySelector("line:last-child");
+    main?.setAttribute("stroke", "orange");
+  } else {
+    el.setAttribute("stroke", "orange");
+  }
+  selectedElement = el;
+}
 </script>
 
 </body>
