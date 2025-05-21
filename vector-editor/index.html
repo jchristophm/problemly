@@ -32,9 +32,10 @@
 <script>
 const svgNS = "http://www.w3.org/2000/svg";
 const canvas = document.getElementById("canvas");
-let currentTool = "select";
 
+let currentTool = "select";
 let isDrawing = false;
+let isMouseDown = false;      // 🔧 New: Track if mouse is pressed
 let wasMoved = false;
 let startX = 0, startY = 0;
 let currentElement = null;
@@ -83,12 +84,23 @@ document.getElementById("delete").addEventListener("click", () => {
   }
 });
 
-// FIX: Prevent mouse default interference
+// Mouse down — start draw/drag, mark mouse as down
 canvas.addEventListener("mousedown", (e) => {
   if (e.cancelable) e.preventDefault();
+  isMouseDown = true;
   startDraw(e);
 });
 canvas.addEventListener("touchstart", startDraw, { passive: false });
+
+canvas.addEventListener("mouseleave", () => {
+  isMouseDown = false;
+});
+
+canvas.addEventListener("mouseup", (e) => {
+  isMouseDown = false;
+  endDraw(e);
+});
+canvas.addEventListener("touchend", endDraw);
 
 function startDraw(e) {
   if (e.cancelable) e.preventDefault();
@@ -98,7 +110,6 @@ function startDraw(e) {
   currentElement = null;
   wasMoved = false;
 
-  // FIX: Always clear selection first
   clearSelection();
 
   if (currentTool === "select") {
@@ -222,6 +233,10 @@ function dragDraw(e) {
   const { x, y } = getCoords(e);
   wasMoved = true;
 
+  // FIX: Only allow drag with mouse if pressed
+  const isMouse = !e.touches;
+  if (isMouse && !isMouseDown) return;
+
   if (currentTool === "select" && selectedElement) {
     if (selectedElement.tagName === "text") {
       selectedElement.setAttribute("x", x - offsetX);
@@ -274,7 +289,6 @@ function endDraw() {
   currentElement = null;
   wasMoved = false;
 
-  // FIX: Always clear selection after draw
   if (currentTool !== "select") {
     clearSelection();
     currentTool = "select";
@@ -284,9 +298,6 @@ function endDraw() {
     clearSelection();
   }
 }
-
-canvas.addEventListener("mouseup", endDraw);
-canvas.addEventListener("touchend", endDraw);
 
 function clearSelection() {
   if (selectedElement) {
