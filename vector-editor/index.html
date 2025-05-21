@@ -2,21 +2,117 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vector Diagram Editor</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Minimal Vector Editor</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; }
+    #toolbar {
+      display: flex; gap: 4px; padding: 8px;
+      justify-content: center; background: #eee;
+    }
+    #toolbar button { font-size: 18px; padding: 6px 10px; }
+    #drawing { border: 1px solid #ccc; display: block; margin: auto; touch-action: none; }
+  </style>
 </head>
 <body>
-  <div id="toolbar">
-    <button data-tool="vector">➡️</button>
-    <button data-tool="box">⬛</button>
-    <button data-tool="circle">⚪</button>
-    <button data-tool="line">📏</button>
-    <button data-tool="text">🔤</button>
-    <button id="delete">🗑️</button>
-    <button id="export">⬇️</button>
-  </div>
-  <svg id="canvas" width="320" height="480" viewBox="0 0 320 480"></svg>
-  <script src="script.js"></script>
+
+<div id="toolbar">
+  <button data-tool="select">🖱️</button>
+  <button data-tool="vector">➡️</button>
+  <button data-tool="line">📏</button>
+  <button data-tool="rect">⬛</button>
+  <button data-tool="circle">⚪</button>
+  <button data-tool="text">🔤</button>
+</div>
+
+<svg id="drawing" width="360" height="480"></svg>
+
+<!-- SVG.js -->
+<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.draggable.js"></script>
+
+<script>
+  const draw = SVG().addTo('#drawing').size(360, 480);
+  let currentTool = 'select';
+  let start, temp;
+
+  // Create arrowhead
+  draw.defs().marker(10, 10, function(add) {
+    add.path('M0,0 L10,5 L0,10 Z').fill('#444');
+    this.ref(10, 5).attr({ id: 'arrowhead', orient: 'auto', markerWidth: 6, markerHeight: 6 });
+  });
+
+  // Tool switching
+  document.querySelectorAll('#toolbar button').forEach(btn =>
+    btn.onclick = () => currentTool = btn.dataset.tool
+  );
+
+  // Drawing logic
+  draw.on('mousedown touchstart', function(e) {
+    if (currentTool === 'select') return;
+
+    const { x, y } = getLocalPoint(e);
+    start = { x, y };
+
+    switch (currentTool) {
+      case 'line':
+        temp = draw.line(x, y, x, y).stroke({ width: 2, color: '#000' });
+        break;
+      case 'vector':
+        temp = draw.line(x, y, x, y)
+          .stroke({ width: 2, color: '#f00' })
+          .marker('end', draw.findOne('#arrowhead'));
+        break;
+      case 'rect':
+        temp = draw.rect(0, 0).move(x, y).fill('#44f4').stroke({ color: '#00f' });
+        break;
+      case 'circle':
+        temp = draw.circle(0).move(x, y).fill('#0f03').stroke({ color: '#080' });
+        break;
+      case 'text':
+        const label = prompt("Enter label text:");
+        if (label) {
+          temp = draw.text(label).move(x, y).font({ size: 16, anchor: 'start' });
+          temp.draggable();
+        }
+        currentTool = 'select';
+        return;
+    }
+  });
+
+  draw.on('mousemove touchmove', function(e) {
+    if (!temp || currentTool === 'select') return;
+    const { x, y } = getLocalPoint(e);
+
+    switch (currentTool) {
+      case 'line':
+      case 'vector':
+        temp.plot([start.x, start.y, x, y]);
+        break;
+      case 'rect':
+        temp.size(Math.abs(x - start.x), Math.abs(y - start.y))
+            .move(Math.min(x, start.x), Math.min(y, start.y));
+        break;
+      case 'circle':
+        const r = Math.sqrt((x - start.x) ** 2 + (y - start.y) ** 2);
+        temp.radius(r).center(start.x, start.y);
+        break;
+    }
+  });
+
+  draw.on('mouseup touchend', function() {
+    if (temp) {
+      temp.draggable(); // allow move after draw
+      temp = null;
+      currentTool = 'select'; // return to move mode
+    }
+  });
+
+  function getLocalPoint(e) {
+    const point = draw.point(e.touches ? e.touches[0].clientX : e.clientX, e.touches ? e.touches[0].clientY : e.clientY);
+    return { x: point.x, y: point.y };
+  }
+</script>
+
 </body>
 </html>
