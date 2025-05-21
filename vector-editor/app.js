@@ -17,9 +17,9 @@ function snap(val) {
   return Math.round(val / gridSize) * gridSize;
 }
 
-// ================== TOOLS ===================
+// ============== Tools ==============
 
-function addBox() {
+window.addBox = function () {
   const rect = new Konva.Rect({
     x: 60, y: 60,
     width: 80, height: 60,
@@ -30,9 +30,9 @@ function addBox() {
   });
   enableSelect(rect);
   layer.add(rect).draw();
-}
+};
 
-function addCircle() {
+window.addCircle = function () {
   const circ = new Konva.Circle({
     x: 100, y: 100,
     radius: 30,
@@ -43,9 +43,9 @@ function addCircle() {
   });
   enableSelect(circ);
   layer.add(circ).draw();
-}
+};
 
-function addText() {
+window.addText = function () {
   const text = new Konva.Text({
     x: 100,
     y: 100,
@@ -56,9 +56,9 @@ function addText() {
   });
   enableSelect(text);
   layer.add(text).draw();
-}
+};
 
-function addLine() {
+window.addLine = function () {
   const line = new Konva.Line({
     points: [50, 50, 150, 150],
     stroke: 'black',
@@ -67,9 +67,9 @@ function addLine() {
   });
   enableSelect(line);
   layer.add(line).draw();
-}
+};
 
-function addArrow() {
+window.addArrow = function () {
   const points = [80, 80, 180, 180];
 
   const arrow = new Konva.Arrow({
@@ -95,14 +95,14 @@ function addArrow() {
 
   enableSelect(arrow, [p1, p2]);
   layer.add(arrow, p1, p2).draw();
-}
+};
 
 function snapArrow(arrow) {
   const pts = arrow.points().map(snap);
   arrow.points(pts);
 }
 
-// =============== UTILITIES ===================
+// ============== Utils ==============
 
 function createHandle(x, y, onDragMove) {
   const handle = new Konva.Circle({
@@ -125,6 +125,7 @@ function createHandle(x, y, onDragMove) {
 }
 
 function enableSelect(shape, extra = []) {
+  shape._originalStroke = shape.stroke();
   shape.on('click tap', () => {
     selectShape(shape, extra);
   });
@@ -157,7 +158,7 @@ function deselect() {
   selectedShape = null;
 }
 
-function deleteSelected() {
+window.deleteSelected = function () {
   if (!selectedShape) return;
   if (selectedShape._extraHandles) {
     selectedShape._extraHandles.forEach(h => h.destroy());
@@ -165,18 +166,12 @@ function deleteSelected() {
   selectedShape.destroy();
   selectedShape = null;
   layer.draw();
-}
+};
 
 stage.on('click tap', (e) => {
   if (e.target === stage) deselect();
 });
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Delete') deleteSelected();
+  if (e.key === 'Delete') window.deleteSelected();
 });
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Delete') window.deleteSelected();
-  });
-}
-
