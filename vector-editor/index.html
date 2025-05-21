@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Fabric.js FBD Editor</title>
+  <meta charset="UTF-8" />
+  <title>Konva FBD Editor</title>
   <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-  <script defer src="script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/konva@9/konva.min.js"></script>
 </head>
 <body>
 
 <div id="tools">
-  <button onclick="addLine()">Line</button>
   <button onclick="addArrow()">Arrow</button>
+  <button onclick="addLine()">Line</button>
   <button onclick="addBox()">Box</button>
   <button onclick="addCircle()">Circle</button>
   <button onclick="addText()">Text</button>
   <button onclick="deleteSelected()">Delete</button>
 </div>
 
-<canvas id="c" width="360" height="360"></canvas>
+<div id="container"></div>
+<script src="app.js"></script>
 
 </body>
 </html>
