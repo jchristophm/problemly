@@ -157,6 +157,16 @@ window.addArrow = function () {
     layer.batchDraw();
   });
 
+  arrow.on('dragmove', () => {
+  // Live update handle positions if selected
+  if (selectedShape === arrow && arrow._extraHandles) {
+    const [x1, y1, x2, y2] = arrow.points();
+    arrow._extraHandles[0].position({ x: x1, y: y1 });
+    arrow._extraHandles[1].position({ x: x2, y: y2 });
+    layer.batchDraw();
+  }
+});
+
   arrow.on('dragend', () => {
     const [x1, y1, x2, y2] = arrow.points();
     if (arrow._extraHandles) {
