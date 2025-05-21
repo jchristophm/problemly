@@ -11,6 +11,13 @@ const stage = new Konva.Stage({
 const layer = new Konva.Layer();
 stage.add(layer);
 
+const tr = new Konva.Transformer({
+  rotateEnabled: true,
+  ignoreStroke: true,
+  padding: 4
+});
+layer.add(tr);
+
 let selectedShape = null;
 
 function snap(val) {
@@ -21,27 +28,30 @@ function snap(val) {
 
 window.addBox = function () {
   const rect = new Konva.Rect({
-    x: 60, y: 60,
-    width: 80, height: 60,
+    x: 60,
+    y: 60,
+    width: 80,
+    height: 60,
     fill: '#99f',
     stroke: 'blue',
     strokeWidth: 2,
     draggable: true
   });
-  enableSelect(rect);
+  enableTransformable(rect);
   layer.add(rect).draw();
 };
 
 window.addCircle = function () {
   const circ = new Konva.Circle({
-    x: 100, y: 100,
+    x: 100,
+    y: 100,
     radius: 30,
     fill: '#9f9',
     stroke: 'green',
     strokeWidth: 2,
     draggable: true
   });
-  enableSelect(circ);
+  enableTransformable(circ);
   layer.add(circ).draw();
 };
 
@@ -54,19 +64,41 @@ window.addText = function () {
     fill: 'black',
     draggable: true
   });
-  enableSelect(text);
+  enableTransformable(text);
   layer.add(text).draw();
 };
 
 window.addLine = function () {
+  const points = [60, 60, 160, 160];
   const line = new Konva.Line({
-    points: [50, 50, 150, 150],
+    points,
     stroke: 'black',
     strokeWidth: 2,
-    draggable: true
+    hitStrokeWidth: 20
   });
-  enableSelect(line);
-  layer.add(line).draw();
+
+  const p1 = createHandle(points[0], points[1], (x, y) => {
+    line.points([x, y, line.points()[2], line.points()[3]]);
+    snapLine(line);
+    layer.batchDraw();
+  });
+
+  const p2 = createHandle(points[2], points[3], (x, y) => {
+    line.points([line.points()[0], line.points()[1], x, y]);
+    snapLine(line);
+    layer.batchDraw();
+  });
+
+  line.on('click tap', () => {
+    deselect();
+    selectedShape = line;
+    selectedShape._extraHandles = [p1, p2];
+    selectedShape.stroke('orange');
+    layer.batchDraw();
+  });
+
+  snapLine(line);
+  layer.add(line, p1, p2).draw();
 };
 
 window.addArrow = function () {
@@ -78,7 +110,8 @@ window.addArrow = function () {
     fill: 'red',
     strokeWidth: 3,
     pointerLength: 10,
-    pointerWidth: 10
+    pointerWidth: 10,
+    hitStrokeWidth: 20
   });
 
   const p1 = createHandle(points[0], points[1], (x, y) => {
@@ -93,20 +126,24 @@ window.addArrow = function () {
     layer.batchDraw();
   });
 
-  enableSelect(arrow, [p1, p2]);
+  arrow.on('click tap', () => {
+    deselect();
+    selectedShape = arrow;
+    selectedShape._extraHandles = [p1, p2];
+    selectedShape.stroke('orange');
+    layer.batchDraw();
+  });
+
+  snapArrow(arrow);
   layer.add(arrow, p1, p2).draw();
 };
 
-function snapArrow(arrow) {
-  const pts = arrow.points().map(snap);
-  arrow.points(pts);
-}
-
-// ============== Utils ==============
+// ============== Utility ==============
 
 function createHandle(x, y, onDragMove) {
   const handle = new Konva.Circle({
-    x, y,
+    x,
+    y,
     radius: 6,
     fill: '#ff0',
     stroke: '#000',
@@ -124,10 +161,25 @@ function createHandle(x, y, onDragMove) {
   return handle;
 }
 
-function enableSelect(shape, extra = []) {
+function snapArrow(arrow) {
+  const pts = arrow.points().map(snap);
+  arrow.points(pts);
+}
+
+function snapLine(line) {
+  const pts = line.points().map(snap);
+  line.points(pts);
+}
+
+function enableTransformable(shape) {
   shape._originalStroke = shape.stroke();
+
   shape.on('click tap', () => {
-    selectShape(shape, extra);
+    deselect();
+    tr.nodes([shape]);
+    selectedShape = shape;
+    shape.stroke('orange');
+    layer.batchDraw();
   });
 
   shape.on('dragmove', () => {
@@ -138,24 +190,16 @@ function enableSelect(shape, extra = []) {
   });
 }
 
-function selectShape(shape, extraHandles = []) {
-  if (selectedShape && selectedShape !== shape) {
-    deselect();
-  }
-  selectedShape = shape;
-  shape.stroke('orange');
-  shape.draw();
-  selectedShape._extraHandles = extraHandles;
-}
-
 function deselect() {
-  if (!selectedShape) return;
-  selectedShape.stroke(selectedShape._originalStroke || 'black');
-  layer.batchDraw();
-  if (selectedShape._extraHandles) {
-    selectedShape._extraHandles.forEach(h => h.destroy());
+  tr.nodes([]);
+  if (selectedShape) {
+    selectedShape.stroke(selectedShape._originalStroke || 'black');
+    if (selectedShape._extraHandles) {
+      selectedShape._extraHandles.forEach(h => h.destroy());
+    }
+    selectedShape = null;
+    layer.batchDraw();
   }
-  selectedShape = null;
 }
 
 window.deleteSelected = function () {
@@ -165,6 +209,7 @@ window.deleteSelected = function () {
   }
   selectedShape.destroy();
   selectedShape = null;
+  tr.nodes([]);
   layer.draw();
 };
 
