@@ -1,10 +1,16 @@
-canvas {
-  border: 1px solid #ccc;
-  touch-action: none;
+body {
+  font-family: sans-serif;
+  margin: 20px;
 }
 #tools {
   margin-bottom: 10px;
 }
 #tools button {
   margin-right: 5px;
+}
+#container {
+  border: 1px solid #ccc;
+  width: 360px;
+  height: 360px;
+  touch-action: none;
 }
