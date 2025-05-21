@@ -167,14 +167,29 @@ window.addArrow = function () {
   }
 });
 
-  arrow.on('dragend', () => {
-    const [x1, y1, x2, y2] = arrow.points();
-    if (arrow._extraHandles) {
-      arrow._extraHandles[0].position({ x: x1, y: y1 });
-      arrow._extraHandles[1].position({ x: x2, y: y2 });
-      layer.batchDraw();
-    }
-  });
+arrow.on('dragend', () => {
+  const offsetX = arrow.x();
+  const offsetY = arrow.y();
+  const [x1, y1, x2, y2] = arrow.points();
+
+  // Update points to reflect moved position
+  const newPoints = [
+    x1 + offsetX,
+    y1 + offsetY,
+    x2 + offsetX,
+    y2 + offsetY
+  ];
+  arrow.points(newPoints);
+  arrow.position({ x: 0, y: 0 }); // clear transform
+
+  // If selected, update handles too
+  if (selectedShape === arrow && arrow._extraHandles) {
+    arrow._extraHandles[0].position({ x: newPoints[0], y: newPoints[1] });
+    arrow._extraHandles[1].position({ x: newPoints[2], y: newPoints[3] });
+  }
+
+  layer.batchDraw();
+});
 
   layer.add(arrow);
   arrow.moveToBottom(); // make sure handles appear on top later
