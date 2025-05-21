@@ -172,23 +172,26 @@ arrow.on('dragend', () => {
   const offsetY = arrow.y();
   const [x1, y1, x2, y2] = arrow.points();
 
-  // Update points to reflect moved position
   const newPoints = [
     x1 + offsetX,
     y1 + offsetY,
     x2 + offsetX,
     y2 + offsetY
   ];
+
   arrow.points(newPoints);
   arrow.position({ x: 0, y: 0 }); // clear transform
 
-  // If selected, update handles too
   if (selectedShape === arrow && arrow._extraHandles) {
     arrow._extraHandles[0].position({ x: newPoints[0], y: newPoints[1] });
     arrow._extraHandles[1].position({ x: newPoints[2], y: newPoints[3] });
+
+    // 👇 critical fix: bring handles to top
+    arrow._extraHandles[0].moveToTop();
+    arrow._extraHandles[1].moveToTop();
   }
 
-  layer.batchDraw();
+  stage.batchDraw();
 });
 
   layer.add(arrow);
