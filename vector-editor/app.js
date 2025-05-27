@@ -61,10 +61,64 @@ window.addText = function () {
     y: 100,
     text: 'Label',
     fontSize: 16,
+    fontFamily: 'Arial',
     fill: 'black',
     draggable: true
   });
+
+  text._originalStroke = text.stroke();
+
   enableTransformable(text);
+
+  text.on('dblclick dbltap', () => {
+    const absPos = text.getAbsolutePosition();
+    const stageBox = stage.container().getBoundingClientRect();
+
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+
+    // Style the textarea
+    textarea.value = text.text();
+    textarea.style.position = 'absolute';
+    textarea.style.top = `${stageBox.top + absPos.y}px`;
+    textarea.style.left = `${stageBox.left + absPos.x}px`;
+    textarea.style.width = `${text.width()}px`;
+    textarea.style.height = `${text.height()}px`;
+    textarea.style.fontSize = `${text.fontSize()}px`;
+    textarea.style.fontFamily = text.fontFamily();
+    textarea.style.color = text.fill();
+    textarea.style.border = 'none';
+    textarea.style.padding = '0px';
+    textarea.style.margin = '0px';
+    textarea.style.overflow = 'hidden';
+    textarea.style.background = 'none';
+    textarea.style.outline = 'none';
+    textarea.style.resize = 'none';
+    textarea.style.lineHeight = text.lineHeight();
+    textarea.style.transform = `rotate(${text.rotation()}deg)`;
+    textarea.style.transformOrigin = 'top left';
+    textarea.style.textAlign = text.align();
+    textarea.style.zIndex = 1000;
+
+    textarea.focus();
+
+    textarea.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        text.text(textarea.value);
+        document.body.removeChild(textarea);
+        layer.draw();
+      } else if (e.key === 'Escape') {
+        document.body.removeChild(textarea);
+      }
+    });
+
+    textarea.addEventListener('blur', function () {
+      text.text(textarea.value);
+      document.body.removeChild(textarea);
+      layer.draw();
+    });
+  });
+
   layer.add(text).draw();
 };
 
@@ -338,7 +392,12 @@ function enableTransformable(shape) {
     deselect();
     tr.nodes([shape]);
     selectedShape = shape;
-    shape.stroke('orange');
+
+    // Only apply stroke highlight to non-text shapes
+    if (!(shape instanceof Konva.Text)) {
+      shape.stroke('orange');
+    }
+
     layer.batchDraw();
   });
 
@@ -356,9 +415,7 @@ function deselect() {
   if (selectedShape) {
     // Hide or destroy extra handles and touch zones
     if (selectedShape._extraHandles) {
-      selectedShape._extraHandles.forEach(h => {
-        h.hide();
-      });
+      selectedShape._extraHandles.forEach(h => h.hide());
     }
 
     if (selectedShape._touchHitStart) {
@@ -369,7 +426,11 @@ function deselect() {
       selectedShape._touchHitEnd.hide();
     }
 
-    selectedShape.stroke(selectedShape._originalStroke || 'black');
+    // Avoid applying stroke reset to Konva.Text
+    if (!(selectedShape instanceof Konva.Text)) {
+      selectedShape.stroke(selectedShape._originalStroke || 'black');
+    }
+
     selectedShape.draggable(true);
     selectedShape = null;
     layer.batchDraw();
