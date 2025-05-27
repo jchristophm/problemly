@@ -417,28 +417,6 @@ function enableTransformable(shape) {
   });
 }
 
-shape.on('transformend', () => {
-  const scaleX = shape.scaleX();
-  const scaleY = shape.scaleY();
-
-  // Reset scale and apply it to dimensions (Konva uses transforms)
-  shape.scale({ x: 1, y: 1 });
-
-  if (shape.width && shape.height) {
-    const newWidth = snap(shape.width() * scaleX);
-    const newHeight = snap(shape.height() * scaleY);
-    shape.width(newWidth);
-    shape.height(newHeight);
-  }
-
-  if (shape.radius) {
-    const newRadius = snap(shape.radius() * scaleX); // assuming uniform scale
-    shape.radius(newRadius);
-  }
-
-  layer.batchDraw();
-});
-
 function deselect() {
   tr.nodes([]);
 
