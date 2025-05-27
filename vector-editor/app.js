@@ -401,7 +401,7 @@ function enableTransformable(shape) {
     tr.nodes([shape]);
     selectedShape = shape;
 
-    // Only apply stroke highlight to non-text shapes
+    // Only highlight non-text shapes
     if (!(shape instanceof Konva.Text)) {
       shape.stroke('orange');
     }
@@ -414,6 +414,24 @@ function enableTransformable(shape) {
       x: snap(shape.x()),
       y: snap(shape.y())
     });
+  });
+
+  shape.on('transformend', () => {
+    const scaleX = shape.scaleX();
+    const scaleY = shape.scaleY();
+    shape.scale({ x: 1, y: 1 });
+
+    if (shape instanceof Konva.Rect) {
+      shape.width(snap(shape.width() * scaleX));
+      shape.height(snap(shape.height() * scaleY));
+    }
+
+    if (shape instanceof Konva.Circle) {
+      const avgScale = (scaleX + scaleY) / 2;
+      shape.radius(snap(shape.radius() * avgScale));
+    }
+
+    layer.batchDraw();
   });
 }
 
