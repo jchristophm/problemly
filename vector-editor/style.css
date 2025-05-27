@@ -44,4 +44,5 @@ body {
   width: 360px;
   height: 360px;
   touch-action: none;
+  margin-top: 16px;
 }
