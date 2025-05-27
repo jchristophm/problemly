@@ -2,35 +2,42 @@ body {
   font-family: sans-serif;
   margin: 20px;
 }
-#tools {
-  margin-bottom: 10px;
-}
-#tools button {
-  margin-right: 5px;
-}
-  #toolbar button {
-    background: #f5f5f5;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    width: 40px;
-    height: 40px;
-    padding: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s ease;
-  }
 
-  #toolbar button:hover {
-    background: #e0e0e0;
-  }
+#toolbar {
+  margin-bottom: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
 
-  #toolbar .icon {
-    width: 20px;
-    height: 20px;
-    stroke: #333;
-  }
+#toolbar button {
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+  color: #333; /* enables stroke="currentColor" to show properly */
+}
+
+#toolbar button:hover {
+  background: #e0e0e0;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  display: block;
+}
+
 #container {
   border: 2px solid #888;
   box-sizing: content-box;
@@ -38,9 +45,3 @@ body {
   height: 360px;
   touch-action: none;
 }
-.icon {
-  width: 20px;
-  height: 20px;
-  stroke: #333;
-}
-
