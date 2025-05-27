@@ -38,3 +38,9 @@ body {
   height: 360px;
   touch-action: none;
 }
+.icon {
+  width: 20px;
+  height: 20px;
+  stroke: #333;
+}
+
