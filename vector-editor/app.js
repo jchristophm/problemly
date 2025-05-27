@@ -74,6 +74,10 @@ window.addText = function () {
     const absPos = text.getAbsolutePosition();
     const stageBox = stage.container().getBoundingClientRect();
 
+    // 👇 Hide the canvas version while editing
+    text.hide();
+    layer.draw();
+    
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
 
@@ -106,6 +110,7 @@ window.addText = function () {
       if (e.key === 'Enter') {
         text.text(textarea.value);
         document.body.removeChild(textarea);
+        text.show(); // 👈 show it again
         layer.draw();
       } else if (e.key === 'Escape') {
         document.body.removeChild(textarea);
@@ -115,6 +120,7 @@ window.addText = function () {
     textarea.addEventListener('blur', function () {
       text.text(textarea.value);
       document.body.removeChild(textarea);
+      text.show(); // 👈 show it again
       layer.draw();
     });
   });
