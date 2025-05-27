@@ -8,6 +8,8 @@ const stage = new Konva.Stage({
   height
 });
 
+stage.container().style.border = '2px solid #888';
+
 const layer = new Konva.Layer();
 stage.add(layer);
 
@@ -32,7 +34,7 @@ window.addBox = function () {
     y: 60,
     width: 80,
     height: 60,
-    fillEnabled: false,
+    fill: 'transparent',
     stroke: 'blue',
     strokeWidth: 2,
     draggable: true
@@ -46,7 +48,7 @@ window.addCircle = function () {
     x: 100,
     y: 100,
     radius: 30,
-    fillEnabled: false,
+    fill: 'transparent',
     stroke: 'green',
     strokeWidth: 2,
     draggable: true
