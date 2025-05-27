@@ -215,6 +215,12 @@ window.addArrow = function () {
     if (!hitStart.getLayer()) layer.add(hitStart);
     if (!hitEnd.getLayer()) layer.add(hitEnd);
 
+    // 👇 SHOW everything that may have been hidden
+    handleStart.show();
+    handleEnd.show();
+    hitStart.show();
+    hitEnd.show();
+
     updateHandles();
     arrow.moveToBottom();
     layer.batchDraw();
