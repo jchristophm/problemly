@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Konva FBD Editor</title>
+  <title>Problemly Diagram Editor</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/konva@9/konva.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 </head>
 <body>
 
@@ -17,7 +18,10 @@
   <button onclick="deleteSelected()">Delete</button>
 </div>
 
-<div id="container"></div>
+<div style="width: 100%; display: flex; justify-content: center;">
+  <div id="container"></div>
+</div>
+
 <script src="app.js"></script>
 
 </body>
