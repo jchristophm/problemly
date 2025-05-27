@@ -137,19 +137,31 @@ window.addLine = function () {
   line.on('dragmove', updateHandles);
 
   line.on('dragend', () => {
-    const offsetX = line.x();
-    const offsetY = line.y();
-    const [x1, y1, x2, y2] = line.points();
-    const newPoints = [
-      x1 + offsetX,
-      y1 + offsetY,
-      x2 + offsetX,
-      y2 + offsetY
-    ];
-    line.points(newPoints);
-    line.position({ x: 0, y: 0 });
-    updateHandles();
-    layer.batchDraw();
+  const offsetX = line.x();
+  const offsetY = line.y();
+  const [x1, y1, x2, y2] = line.points();
+
+  const newPoints = [
+    snap(x1 + offsetX),
+    snap(y1 + offsetY),
+    snap(x2 + offsetX),
+    snap(y2 + offsetY)
+  ];
+
+  line.points(newPoints);
+  line.position({ x: 0, y: 0 });
+
+  if (selectedShape === line && line._extraHandles?.length === 2) {
+    line._extraHandles[0].position({ x: newPoints[0], y: newPoints[1] });
+    line._extraHandles[1].position({ x: newPoints[2], y: newPoints[3] });
+    line._extraHandles[0].moveToTop();
+    line._extraHandles[1].moveToTop();
+  }
+
+  if (line._touchHitStart) line._touchHitStart.position({ x: newPoints[0], y: newPoints[1] });
+  if (line._touchHitEnd) line._touchHitEnd.position({ x: newPoints[2], y: newPoints[3] });
+
+  layer.batchDraw();
   });
 
   snapLine(line);
@@ -236,19 +248,31 @@ window.addArrow = function () {
   arrow.on('dragmove', updateHandles);
 
   arrow.on('dragend', () => {
-    const offsetX = arrow.x();
-    const offsetY = arrow.y();
-    const [x1, y1, x2, y2] = arrow.points();
-    const newPoints = [
-      x1 + offsetX,
-      y1 + offsetY,
-      x2 + offsetX,
-      y2 + offsetY
-    ];
-    arrow.points(newPoints);
-    arrow.position({ x: 0, y: 0 });
-    updateHandles();
-    layer.batchDraw();
+  const offsetX = arrow.x();
+  const offsetY = arrow.y();
+  const [x1, y1, x2, y2] = arrow.points();
+
+  const newPoints = [
+    snap(x1 + offsetX),
+    snap(y1 + offsetY),
+    snap(x2 + offsetX),
+    snap(y2 + offsetY)
+  ];
+
+  arrow.points(newPoints);
+  arrow.position({ x: 0, y: 0 });
+
+  if (selectedShape === arrow && arrow._extraHandles?.length === 2) {
+    arrow._extraHandles[0].position({ x: newPoints[0], y: newPoints[1] });
+    arrow._extraHandles[1].position({ x: newPoints[2], y: newPoints[3] });
+    arrow._extraHandles[0].moveToTop();
+    arrow._extraHandles[1].moveToTop();
+  }
+
+  if (arrow._touchHitStart) arrow._touchHitStart.position({ x: newPoints[0], y: newPoints[1] });
+  if (arrow._touchHitEnd) arrow._touchHitEnd.position({ x: newPoints[2], y: newPoints[3] });
+
+  layer.batchDraw();
   });
 
   layer.add(arrow);
