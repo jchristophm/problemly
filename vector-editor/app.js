@@ -32,7 +32,7 @@ window.addBox = function () {
     y: 60,
     width: 80,
     height: 60,
-    fill: '#99f',
+    fillEnabled: false,
     stroke: 'blue',
     strokeWidth: 2,
     draggable: true
@@ -46,7 +46,7 @@ window.addCircle = function () {
     x: 100,
     y: 100,
     radius: 30,
-    fill: '#9f9',
+    fillEnabled: false,
     stroke: 'green',
     strokeWidth: 2,
     draggable: true
