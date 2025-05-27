@@ -167,46 +167,60 @@ window.addArrow = function () {
 
   arrow._originalStroke = arrow.stroke();
 
+  // Create persistent handles and hit zones
   const handleStart = createHandle(pts[0], pts[1], (x, y) => {
     const oldPts = arrow.points();
     arrow.points([x, y, oldPts[2], oldPts[3]]);
+    if (arrow._touchHitStart) arrow._touchHitStart.position({ x, y });
     layer.batchDraw();
   });
 
   const handleEnd = createHandle(pts[2], pts[3], (x, y) => {
     const oldPts = arrow.points();
     arrow.points([oldPts[0], oldPts[1], x, y]);
+    if (arrow._touchHitEnd) arrow._touchHitEnd.position({ x, y });
     layer.batchDraw();
   });
+
+  // Add invisible touch hit zones for better mobile manipulation
+  const hitStart = createTouchHitZone(handleStart);
+  const hitEnd = createTouchHitZone(handleEnd);
+
+  arrow._extraHandles = [handleStart, handleEnd];
+  arrow._touchHitStart = hitStart;
+  arrow._touchHitEnd = hitEnd;
+
+  const updateHandles = () => {
+    const [x1, y1, x2, y2] = arrow.points();
+    handleStart.position({ x: x1, y: y1 });
+    handleEnd.position({ x: x2, y: y2 });
+    hitStart.position({ x: x1, y: y1 });
+    hitEnd.position({ x: x2, y: y2 });
+
+    // Always move to top
+    handleStart.moveToTop();
+    handleEnd.moveToTop();
+    hitStart.moveToTop();
+    hitEnd.moveToTop();
+  };
 
   arrow.on('click tap', () => {
     deselect();
     selectedShape = arrow;
     arrow.stroke('orange');
     arrow.draggable(false);
-    arrow._extraHandles = [handleStart, handleEnd];
-
-    const [x1, y1, x2, y2] = arrow.points();
-    handleStart.position({ x: x1, y: y1 });
-    handleEnd.position({ x: x2, y: y2 });
 
     if (!handleStart.getLayer()) layer.add(handleStart);
     if (!handleEnd.getLayer()) layer.add(handleEnd);
+    if (!hitStart.getLayer()) layer.add(hitStart);
+    if (!hitEnd.getLayer()) layer.add(hitEnd);
 
-    handleStart.moveToTop();
-    handleEnd.moveToTop();
+    updateHandles();
     arrow.moveToBottom();
     layer.batchDraw();
   });
 
-  arrow.on('dragmove', () => {
-    if (selectedShape === arrow && arrow._extraHandles) {
-      const [x1, y1, x2, y2] = arrow.points();
-      arrow._extraHandles[0].position({ x: x1, y: y1 });
-      arrow._extraHandles[1].position({ x: x2, y: y2 });
-      layer.batchDraw();
-    }
-  });
+  arrow.on('dragmove', updateHandles);
 
   arrow.on('dragend', () => {
     const offsetX = arrow.x();
@@ -220,16 +234,8 @@ window.addArrow = function () {
     ];
     arrow.points(newPoints);
     arrow.position({ x: 0, y: 0 });
-
-    if (selectedShape === arrow && arrow._extraHandles?.length === 2) {
-      const [h1, h2] = arrow._extraHandles;
-      h1.position({ x: newPoints[0], y: newPoints[1] });
-      h2.position({ x: newPoints[2], y: newPoints[3] });
-      h1.moveToTop();
-      h2.moveToTop();
-    }
-
-    stage.batchDraw();
+    updateHandles();
+    layer.batchDraw();
   });
 
   layer.add(arrow);
