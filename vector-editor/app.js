@@ -315,11 +315,23 @@ function enableTransformable(shape) {
 
 function deselect() {
   tr.nodes([]);
+
   if (selectedShape) {
+    // Hide or destroy extra handles and touch zones
     if (selectedShape._extraHandles) {
-      selectedShape._extraHandles.forEach(h => h.destroy());
-      selectedShape._extraHandles = [];
+      selectedShape._extraHandles.forEach(h => {
+        h.hide();
+      });
     }
+
+    if (selectedShape._touchHitStart) {
+      selectedShape._touchHitStart.hide();
+    }
+
+    if (selectedShape._touchHitEnd) {
+      selectedShape._touchHitEnd.hide();
+    }
+
     selectedShape.stroke(selectedShape._originalStroke || 'black');
     selectedShape.draggable(true);
     selectedShape = null;
@@ -329,9 +341,20 @@ function deselect() {
 
 window.deleteSelected = function () {
   if (!selectedShape) return;
+
+  // Destroy touch handles and zones
   if (selectedShape._extraHandles) {
     selectedShape._extraHandles.forEach(h => h.destroy());
   }
+
+  if (selectedShape._touchHitStart) {
+    selectedShape._touchHitStart.destroy();
+  }
+
+  if (selectedShape._touchHitEnd) {
+    selectedShape._touchHitEnd.destroy();
+  }
+
   selectedShape.destroy();
   selectedShape = null;
   tr.nodes([]);
