@@ -74,40 +74,81 @@ window.addLine = function () {
   const line = new Konva.Line({
     points: pts,
     stroke: 'black',
-    strokeWidth: 2
+    strokeWidth: 2,
+    draggable: true
   });
 
-  const hitbox = new Konva.Line({
-    points: pts,
-    strokeWidth: 20,
-    stroke: 'rgba(0,0,0,0.001)',
-    listening: true
-  });
+  line._originalStroke = line.stroke();
 
   const p1 = createHandle(pts[0], pts[1], (x, y) => {
     line.points([x, y, line.points()[2], line.points()[3]]);
-    hitbox.points(line.points());
     snapLine(line);
     layer.batchDraw();
   });
 
   const p2 = createHandle(pts[2], pts[3], (x, y) => {
     line.points([line.points()[0], line.points()[1], x, y]);
-    hitbox.points(line.points());
     snapLine(line);
     layer.batchDraw();
   });
 
-  hitbox.on('click tap', () => {
+  line.on('click tap', () => {
     deselect();
     selectedShape = line;
     line.stroke('orange');
-    selectedShape._extraHandles = [p1, p2];
+    line.draggable(false);
+    line._extraHandles = [p1, p2];
+
+    const [x1, y1, x2, y2] = line.points();
+    p1.position({ x: x1, y: y1 });
+    p2.position({ x: x2, y: y2 });
+
+    if (!p1.getLayer()) layer.add(p1);
+    if (!p2.getLayer()) layer.add(p2);
+
+    p1.moveToTop();
+    p2.moveToTop();
+    line.moveToBottom();
+    layer.batchDraw();
+  });
+
+  line.on('dragmove', () => {
+    if (selectedShape === line && line._extraHandles) {
+      const [x1, y1, x2, y2] = line.points();
+      line._extraHandles[0].position({ x: x1, y: y1 });
+      line._extraHandles[1].position({ x: x2, y: y2 });
+      layer.batchDraw();
+    }
+  });
+
+  line.on('dragend', () => {
+    const offsetX = line.x();
+    const offsetY = line.y();
+    const [x1, y1, x2, y2] = line.points();
+    const newPoints = [
+      x1 + offsetX,
+      y1 + offsetY,
+      x2 + offsetX,
+      y2 + offsetY
+    ];
+    line.points(newPoints);
+    line.position({ x: 0, y: 0 });
+
+    if (selectedShape === line && line._extraHandles?.length === 2) {
+      const [h1, h2] = line._extraHandles;
+      h1.position({ x: newPoints[0], y: newPoints[1] });
+      h2.position({ x: newPoints[2], y: newPoints[3] });
+      h1.moveToTop();
+      h2.moveToTop();
+    }
+
     layer.batchDraw();
   });
 
   snapLine(line);
-  layer.add(line, hitbox, p1, p2).draw();
+  layer.add(line);
+  line.moveToBottom();
+  layer.draw();
 };
 
 window.addArrow = function () {
@@ -142,60 +183,57 @@ window.addArrow = function () {
     deselect();
     selectedShape = arrow;
     arrow.stroke('orange');
-    arrow.draggable(false); // disable dragging while endpoints are active
+    arrow.draggable(false);
     arrow._extraHandles = [handleStart, handleEnd];
 
-    // Position handles at arrow ends
     const [x1, y1, x2, y2] = arrow.points();
     handleStart.position({ x: x1, y: y1 });
     handleEnd.position({ x: x2, y: y2 });
 
-    // Add handles above arrow
-    layer.add(handleStart, handleEnd);
+    if (!handleStart.getLayer()) layer.add(handleStart);
+    if (!handleEnd.getLayer()) layer.add(handleEnd);
+
     handleStart.moveToTop();
     handleEnd.moveToTop();
+    arrow.moveToBottom();
     layer.batchDraw();
   });
 
   arrow.on('dragmove', () => {
-  // Live update handle positions if selected
-  if (selectedShape === arrow && arrow._extraHandles) {
+    if (selectedShape === arrow && arrow._extraHandles) {
+      const [x1, y1, x2, y2] = arrow.points();
+      arrow._extraHandles[0].position({ x: x1, y: y1 });
+      arrow._extraHandles[1].position({ x: x2, y: y2 });
+      layer.batchDraw();
+    }
+  });
+
+  arrow.on('dragend', () => {
+    const offsetX = arrow.x();
+    const offsetY = arrow.y();
     const [x1, y1, x2, y2] = arrow.points();
-    arrow._extraHandles[0].position({ x: x1, y: y1 });
-    arrow._extraHandles[1].position({ x: x2, y: y2 });
-    layer.batchDraw();
-  }
-});
+    const newPoints = [
+      x1 + offsetX,
+      y1 + offsetY,
+      x2 + offsetX,
+      y2 + offsetY
+    ];
+    arrow.points(newPoints);
+    arrow.position({ x: 0, y: 0 });
 
-arrow.on('dragend', () => {
-  const offsetX = arrow.x();
-  const offsetY = arrow.y();
-  const [x1, y1, x2, y2] = arrow.points();
+    if (selectedShape === arrow && arrow._extraHandles?.length === 2) {
+      const [h1, h2] = arrow._extraHandles;
+      h1.position({ x: newPoints[0], y: newPoints[1] });
+      h2.position({ x: newPoints[2], y: newPoints[3] });
+      h1.moveToTop();
+      h2.moveToTop();
+    }
 
-  const newPoints = [
-    x1 + offsetX,
-    y1 + offsetY,
-    x2 + offsetX,
-    y2 + offsetY
-  ];
-
-  arrow.points(newPoints);
-  arrow.position({ x: 0, y: 0 }); // clear transform
-
-  if (selectedShape === arrow && arrow._extraHandles) {
-    arrow._extraHandles[0].position({ x: newPoints[0], y: newPoints[1] });
-    arrow._extraHandles[1].position({ x: newPoints[2], y: newPoints[3] });
-
-    // 👇 critical fix: bring handles to top
-    arrow._extraHandles[0].moveToTop();
-    arrow._extraHandles[1].moveToTop();
-  }
-
-  stage.batchDraw();
-});
+    stage.batchDraw();
+  });
 
   layer.add(arrow);
-  arrow.moveToBottom(); // make sure handles appear on top later
+  arrow.moveToBottom();
   layer.draw();
 };
 
@@ -259,7 +297,7 @@ function deselect() {
       selectedShape._extraHandles = [];
     }
     selectedShape.stroke(selectedShape._originalStroke || 'black');
-    selectedShape.draggable(true); // re-enable drag after deselect
+    selectedShape.draggable(true);
     selectedShape = null;
     layer.batchDraw();
   }
