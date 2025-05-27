@@ -32,8 +32,8 @@ window.addBox = function () {
   const rect = new Konva.Rect({
     x: 60,
     y: 60,
-    width: 80,
-    height: 60,
+    width: 50,
+    height: 50,
     fill: 'transparent',
     stroke: 'blue',
     strokeWidth: 2,
@@ -62,7 +62,7 @@ window.addText = function () {
     x: 100,
     y: 100,
     text: 'Label',
-    fontSize: 16,
+    fontSize: 20,
     fontFamily: 'Arial',
     fill: 'black',
     draggable: true
