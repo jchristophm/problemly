@@ -80,46 +80,61 @@ window.addLine = function () {
 
   line._originalStroke = line.stroke();
 
-  const p1 = createHandle(pts[0], pts[1], (x, y) => {
+  const handleStart = createHandle(pts[0], pts[1], (x, y) => {
     line.points([x, y, line.points()[2], line.points()[3]]);
-    snapLine(line);
+    if (line._touchHitStart) line._touchHitStart.position({ x, y });
     layer.batchDraw();
   });
 
-  const p2 = createHandle(pts[2], pts[3], (x, y) => {
+  const handleEnd = createHandle(pts[2], pts[3], (x, y) => {
     line.points([line.points()[0], line.points()[1], x, y]);
-    snapLine(line);
+    if (line._touchHitEnd) line._touchHitEnd.position({ x, y });
     layer.batchDraw();
   });
+
+  const hitStart = createTouchHitZone(handleStart);
+  const hitEnd = createTouchHitZone(handleEnd);
+
+  line._extraHandles = [handleStart, handleEnd];
+  line._touchHitStart = hitStart;
+  line._touchHitEnd = hitEnd;
+
+  const updateHandles = () => {
+    const [x1, y1, x2, y2] = line.points();
+    handleStart.position({ x: x1, y: y1 });
+    handleEnd.position({ x: x2, y: y2 });
+    hitStart.position({ x: x1, y: y1 });
+    hitEnd.position({ x: x2, y: y2 });
+
+    handleStart.moveToTop();
+    handleEnd.moveToTop();
+    hitStart.moveToTop();
+    hitEnd.moveToTop();
+  };
 
   line.on('click tap', () => {
     deselect();
     selectedShape = line;
     line.stroke('orange');
     line.draggable(false);
-    line._extraHandles = [p1, p2];
 
-    const [x1, y1, x2, y2] = line.points();
-    p1.position({ x: x1, y: y1 });
-    p2.position({ x: x2, y: y2 });
+    if (!handleStart.getLayer()) layer.add(handleStart);
+    if (!handleEnd.getLayer()) layer.add(handleEnd);
+    if (!hitStart.getLayer()) layer.add(hitStart);
+    if (!hitEnd.getLayer()) layer.add(hitEnd);
 
-    if (!p1.getLayer()) layer.add(p1);
-    if (!p2.getLayer()) layer.add(p2);
+    // 👇 Restore hidden handles
+    handleStart.show();
+    handleEnd.show();
+    hitStart.show();
+    hitEnd.show();
 
-    p1.moveToTop();
-    p2.moveToTop();
+    updateHandles();
     line.moveToBottom();
     layer.batchDraw();
   });
 
-  line.on('dragmove', () => {
-    if (selectedShape === line && line._extraHandles) {
-      const [x1, y1, x2, y2] = line.points();
-      line._extraHandles[0].position({ x: x1, y: y1 });
-      line._extraHandles[1].position({ x: x2, y: y2 });
-      layer.batchDraw();
-    }
-  });
+  line.on('dragmove', updateHandles);
 
   line.on('dragend', () => {
     const offsetX = line.x();
@@ -133,15 +148,7 @@ window.addLine = function () {
     ];
     line.points(newPoints);
     line.position({ x: 0, y: 0 });
-
-    if (selectedShape === line && line._extraHandles?.length === 2) {
-      const [h1, h2] = line._extraHandles;
-      h1.position({ x: newPoints[0], y: newPoints[1] });
-      h2.position({ x: newPoints[2], y: newPoints[3] });
-      h1.moveToTop();
-      h2.moveToTop();
-    }
-
+    updateHandles();
     layer.batchDraw();
   });
 
