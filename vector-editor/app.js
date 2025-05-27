@@ -266,6 +266,24 @@ function createHandle(x, y, onDragMove) {
   return handle;
 }
 
+function createTouchHitZone(targetHandle) {
+  const hit = new Konva.Circle({
+    x: targetHandle.x(),
+    y: targetHandle.y(),
+    radius: 16,
+    fill: 'rgba(0,0,0,0.01)', // invisible but interactive
+    listening: true,
+    draggable: true
+  });
+
+  hit.on('dragmove', () => {
+    targetHandle.position({ x: snap(hit.x()), y: snap(hit.y()) });
+    targetHandle.fire('dragmove'); // trigger handle logic
+  });
+
+  return hit;
+}
+
 function snapArrow(arrow) {
   const pts = arrow.points().map(snap);
   arrow.points(pts);
