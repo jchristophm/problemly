@@ -74,14 +74,8 @@ window.addLine = function () {
   const line = new Konva.Line({
     points: pts,
     stroke: 'black',
-    strokeWidth: 2
-  });
-
-  const hitbox = new Konva.Line({
-    points: pts,
-    stroke: 'rgba(0,0,0,0.01)', // invisible but active
-    strokeWidth: 20,
-    listening: true,
+    strokeWidth: 2,
+    hitStrokeWidth: 20,   // 👈 this is the fix: touch-friendly drag area
     draggable: true
   });
 
@@ -89,14 +83,12 @@ window.addLine = function () {
 
   const handleStart = createHandle(pts[0], pts[1], (x, y) => {
     line.points([x, y, line.points()[2], line.points()[3]]);
-    hitbox.points(line.points());
     if (line._touchHitStart) line._touchHitStart.position({ x, y });
     layer.batchDraw();
   });
 
   const handleEnd = createHandle(pts[2], pts[3], (x, y) => {
     line.points([line.points()[0], line.points()[1], x, y]);
-    hitbox.points(line.points());
     if (line._touchHitEnd) line._touchHitEnd.position({ x, y });
     layer.batchDraw();
   });
@@ -121,11 +113,11 @@ window.addLine = function () {
     hitEnd.moveToTop();
   };
 
-  hitbox.on('click tap', () => {
+  line.on('click tap', () => {
     deselect();
     selectedShape = line;
     line.stroke('orange');
-    hitbox.draggable(false);
+    line.draggable(false);
 
     if (!handleStart.getLayer()) layer.add(handleStart);
     if (!handleEnd.getLayer()) layer.add(handleEnd);
@@ -139,24 +131,15 @@ window.addLine = function () {
 
     updateHandles();
     line.moveToBottom();
-    hitbox.moveToBottom();
     layer.batchDraw();
   });
 
-  hitbox.on('dragmove', () => {
-    if (selectedShape === line && line._extraHandles) {
-      const [x1, y1, x2, y2] = line.points();
-      line._extraHandles[0].position({ x: x1, y: y1 });
-      line._extraHandles[1].position({ x: x2, y: y2 });
-      line.points(hitbox.points()); // keep them in sync
-      updateHandles();
-    }
-  });
+  line.on('dragmove', updateHandles);
 
-  hitbox.on('dragend', () => {
-    const offsetX = hitbox.x();
-    const offsetY = hitbox.y();
-    const [x1, y1, x2, y2] = hitbox.points();
+  line.on('dragend', () => {
+    const offsetX = line.x();
+    const offsetY = line.y();
+    const [x1, y1, x2, y2] = line.points();
     const newPoints = [
       x1 + offsetX,
       y1 + offsetY,
@@ -164,24 +147,14 @@ window.addLine = function () {
       y2 + offsetY
     ];
     line.points(newPoints);
-    hitbox.points(newPoints);
-    hitbox.position({ x: 0, y: 0 });
-
-    if (selectedShape === line && line._extraHandles?.length === 2) {
-      const [h1, h2] = line._extraHandles;
-      h1.position({ x: newPoints[0], y: newPoints[1] });
-      h2.position({ x: newPoints[2], y: newPoints[3] });
-      h1.moveToTop();
-      h2.moveToTop();
-    }
-
+    line.position({ x: 0, y: 0 });
+    updateHandles();
     layer.batchDraw();
   });
 
   snapLine(line);
-  layer.add(line, hitbox);
+  layer.add(line);
   line.moveToBottom();
-  hitbox.moveToBottom();
   layer.draw();
 };
 
