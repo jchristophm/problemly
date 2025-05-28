@@ -94,8 +94,8 @@ window.addBox = function () {
   const h = stage.height();
 
   const rect = new Konva.Rect({
-    x: w / 2 - 20,  // center the 40x40 box
-    y: h / 2 - 20,
+    x: snap(w / 2 - 20),  // center the 40x40 box
+    y: snap(h / 2 - 20),
     width: 40,
     height: 40,
     fill: 'transparent',
@@ -113,8 +113,8 @@ window.addCircle = function () {
   const h = stage.height();
 
   const circ = new Konva.Circle({
-    x: w / 2,
-    y: h / 2,
+    x: snap(w / 2),
+    y: snap(h / 2),
     radius: 20,
     fill: 'transparent',
     stroke: 'green',
