@@ -740,55 +740,63 @@ function insertEquation() {
   svg.style.backgroundColor = 'transparent';
 
   // Capture with html2canvas now that it's in DOM
-  html2canvas(svg, { 
-    backgroundColor: null,
-    removeContainer: true
-  }).then(canvas => {
-    const dataURL = canvas.toDataURL();
+html2canvas(svg, {
+  backgroundColor: null,
+  removeContainer: true,
+  scale: 2  // optional: improve resolution
+}).then(canvas => {
+  // ✅ Add transparent padding
+  const paddedCanvas = document.createElement('canvas');
+  const padding = 10;
 
-    // Clean up hidden container
-    document.body.removeChild(svgContainer);
+  paddedCanvas.width = canvas.width + padding * 2;
+  paddedCanvas.height = canvas.height + padding * 2;
 
-    const img = new Image();
-    img.onload = () => {
-      const konvaImage = new Konva.Image({
-        x: snap(stage.width() / 2 - img.width / 2),
-        y: snap(stage.height() / 3 - img.height / 2),
-        image: img,
-        draggable: true
-      });
+  const ctx = paddedCanvas.getContext('2d');
+  ctx.clearRect(0, 0, paddedCanvas.width, paddedCanvas.height);
+  ctx.drawImage(canvas, padding, padding);
 
-      konvaImage.on('dragend', () => {
-        konvaImage.position({
+  const dataURL = paddedCanvas.toDataURL();
+
+  const img = new Image();
+  img.onload = () => {
+    const konvaImage = new Konva.Image({
+      x: snap(stage.width() / 2 - img.width / 2),
+      y: snap(stage.height() / 3 - img.height / 2),
+      image: img,
+      draggable: true
+    });
+
+    konvaImage._latexSource = latex;
+
+    konvaImage.on('dblclick dbltap', () => openMathModal(konvaImage));
+    konvaImage.on('click tap', () => {
+      deselect();
+      selectedShape = konvaImage;
+      tr.nodes([konvaImage]);
+      layer.draw();
+    });
+
+    konvaImage.on('dragend', () => {
+      konvaImage.position({
         x: snap(konvaImage.x()),
         y: snap(konvaImage.y())
-        });
       });
+    });
 
-      konvaImage._latexSource = latex;
-      konvaImage.on('dblclick dbltap', () => openMathModal(konvaImage));
-      konvaImage.on('click tap', () => {
-        deselect();
-        selectedShape = konvaImage;
-        tr.nodes([konvaImage]);
-        layer.draw();
-      });
+    if (currentEquationNode) {
+      currentEquationNode.image(img);
+      currentEquationNode._latexSource = latex;
+      currentEquationNode.getLayer().batchDraw();
+    } else {
+      layer.add(konvaImage);
+      layer.draw();
+    }
 
-      if (currentEquationNode) {
-        currentEquationNode.image(img);
-        currentEquationNode._latexSource = latex;
-        currentEquationNode.getLayer().batchDraw();
-      } else {
-        layer.add(konvaImage);
-        layer.draw();
-      }
-
-      closeMathModal();
-    };
-    img.src = dataURL;
-  }).catch(err => {
-    console.error("html2canvas failed:", err);
-  });
+    closeMathModal();
+  };
+  img.src = dataURL;
+});
 }
 
 // After openMathModal()
