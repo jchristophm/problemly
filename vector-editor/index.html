@@ -7,6 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/konva@9/konva.min.js"></script>
+  <!-- KaTeX CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -83,5 +87,17 @@
 </div>
 
 <script src="app.js"></script>
+
+<!-- Equation Modal -->
+<div id="mathModal" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); background:#fff; border:1px solid #aaa; padding:16px; z-index:10000; box-shadow:0 0 10px #333;">
+  <h3>Enter LaTeX Equation</h3>
+  <textarea id="latexInput" rows="3" style="width:300px;"></textarea>
+  <div id="preview" style="margin-top:10px;"></div>
+  <div style="margin-top:12px; text-align:right;">
+    <button onclick="insertEquation()">Insert</button>
+    <button onclick="closeMathModal()">Cancel</button>
+  </div>
+</div>  
+
 </body>
 </html>
