@@ -648,8 +648,11 @@ function deselect() {
       selectedShape._touchHitEnd.hide();
     }
 
-    // Avoid applying stroke reset to Konva.Text
-    if (!(selectedShape instanceof Konva.Text)) {
+    // Avoid applying stroke reset to Konva.Text or Konva.Image
+    if (
+      !(selectedShape instanceof Konva.Text) &&
+      !(selectedShape instanceof Konva.Image)
+    ) {
       selectedShape.stroke(selectedShape._originalStroke || 'black');
     }
 
