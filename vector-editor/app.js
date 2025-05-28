@@ -27,7 +27,43 @@ function snap(val) {
   return Math.round(val / gridSize) * gridSize;
 }
 
+const gridSize = 20;
+const gridLayer = new Konva.Layer();
+let gridVisible = true;
+
+function drawGrid() {
+  const width = stage.width();
+  const height = stage.height();
+
+  for (let i = 0; i < width / gridSize; i++) {
+    gridLayer.add(new Konva.Line({
+      points: [i * gridSize, 0, i * gridSize, height],
+      stroke: '#eee',
+      strokeWidth: 1
+    }));
+  }
+
+  for (let j = 0; j < height / gridSize; j++) {
+    gridLayer.add(new Konva.Line({
+      points: [0, j * gridSize, width, j * gridSize],
+      stroke: '#eee',
+      strokeWidth: 1
+    }));
+  }
+
+  stage.add(gridLayer);
+  gridLayer.moveToBottom(); // make sure grid is behind everything else
+}
+
+drawGrid();
+
 // ============== Tools ==============
+
+function toggleGrid() {
+  gridVisible = !gridVisible;
+  gridLayer.visible(gridVisible);
+  gridLayer.batchDraw();
+}
 
 window.addBox = function () {
   const rect = new Konva.Rect({
