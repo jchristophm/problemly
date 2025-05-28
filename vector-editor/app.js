@@ -733,9 +733,17 @@ function insertEquation() {
   document.body.appendChild(svgContainer); // ✅ append to live DOM
 
   const svg = svgContainer.querySelector('span');
+  svg.style.border = 'none';
+  svg.style.boxShadow = 'none';
+  svg.style.margin = '0';
+  svg.style.padding = '0';
+  svg.style.backgroundColor = 'transparent';
 
   // Capture with html2canvas now that it's in DOM
-  html2canvas(svg, { backgroundColor: null }).then(canvas => {
+  html2canvas(svg, { 
+    backgroundColor: null
+    removeContainer: true
+  }).then(canvas => {
     const dataURL = canvas.toDataURL();
 
     // Clean up hidden container
