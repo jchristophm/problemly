@@ -1,31 +1,52 @@
-/* rebuild wtf */
-body {
+/* Reset and structure */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
   font-family: sans-serif;
-  margin: 20px;
+}
+
+/* Fixed toolbars */
+#toolbar-top,
+#toolbar-bottom {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  z-index: 10;
+  padding: 0 12px;
 }
 
 #toolbar-top {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  top: 0;
 }
 
 #toolbar-bottom {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 8px 12px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  z-index: 10;
+  bottom: 0;
 }
 
+/* Canvas container fills in between */
+#main-canvas {
+  position: absolute;
+  top: 50px;        /* matches toolbar height */
+  bottom: 50px;     /* matches toolbar height */
+  left: 0;
+  right: 0;
+  overflow: auto;
+  background: #f9f9f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Buttons */
 [id^="toolbar"] button {
   background: #f5f5f5;
   border: 1px solid #ccc;
@@ -38,7 +59,7 @@ body {
   align-items: center;
   justify-content: center;
   transition: background 0.2s ease;
-  color: #333; /* enables stroke="currentColor" to show properly */
+  color: #333;
 }
 
 [id^="toolbar"] button:hover {
@@ -53,11 +74,11 @@ body {
   display: block;
 }
 
+/* Canvas box (optional border, editable dimensions) */
 #container {
   border: 2px solid #888;
-  box-sizing: content-box;
-  width: 360px;
-  height: 360px;
+  width: 90%;
+  height: 90%;
+  box-sizing: border-box;
   touch-action: none;
-  margin-top: 16px;
 }
