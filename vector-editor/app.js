@@ -1,10 +1,14 @@
+let stage, layer, gridLayer;  // GLOBAL NOW
+let selectedShape = null;
+const gridSize = 20;
+let gridVisible = true;
+
 window.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('container');
   const width = container.clientWidth;
   const height = container.clientHeight;
-  const gridSize = 20;
 
-  const stage = new Konva.Stage({
+  stage = new Konva.Stage({
     container: 'container',
     width,
     height
@@ -12,7 +16,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   stage.container().style.border = '2px solid #888';
 
-  const layer = new Konva.Layer();
+  layer = new Konva.Layer();
   stage.add(layer);
 
   const tr = new Konva.Transformer({
@@ -22,52 +26,60 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   layer.add(tr);
 
-  let selectedShape = null;
-
-  function snap(val) {
-    return Math.round(val / gridSize) * gridSize;
-  }
-
-  const gridLayer = new Konva.Layer();
-  let gridVisible = true;
-
-  function drawGrid() {
-    gridLayer.destroyChildren(); // clear any old lines
-    const width = stage.width();
-    const height = stage.height();
-
-    for (let i = 0; i < width / gridSize; i++) {
-      gridLayer.add(new Konva.Line({
-        points: [i * gridSize, 0, i * gridSize, height],
-        stroke: '#eee',
-        strokeWidth: 1
-      }));
-    }
-
-    for (let j = 0; j < height / gridSize; j++) {
-      gridLayer.add(new Konva.Line({
-        points: [0, j * gridSize, width, j * gridSize],
-        stroke: '#eee',
-        strokeWidth: 1
-      }));
-    }
-
-    stage.add(gridLayer);
-    gridLayer.moveToBottom();
-  }
+  gridLayer = new Konva.Layer();
+  stage.add(gridLayer);
 
   drawGrid();
 
-  // Optional: handle resizing
   window.addEventListener('resize', () => {
     const newWidth = container.clientWidth;
     const newHeight = container.clientHeight;
     stage.width(newWidth);
     stage.height(newHeight);
-    drawGrid(); // redraw grid to match new size
+    drawGrid(); // redraw grid
     stage.draw();
   });
+
+  // click on empty space to deselect
+  stage.on('click tap', (e) => {
+    if (e.target === stage) deselect();
+  });
+
+  // delete selected on key press
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Delete') window.deleteSelected();
+  });
 });
+
+// SNAP FUNCTION - stays same
+function snap(val) {
+  return Math.round(val / gridSize) * gridSize;
+}
+
+// DRAW GRID - now safe to call from anywhere
+function drawGrid() {
+  gridLayer.destroyChildren();
+  const width = stage.width();
+  const height = stage.height();
+
+  for (let i = 0; i < width / gridSize; i++) {
+    gridLayer.add(new Konva.Line({
+      points: [i * gridSize, 0, i * gridSize, height],
+      stroke: '#eee',
+      strokeWidth: 1
+    }));
+  }
+
+  for (let j = 0; j < height / gridSize; j++) {
+    gridLayer.add(new Konva.Line({
+      points: [0, j * gridSize, width, j * gridSize],
+      stroke: '#eee',
+      strokeWidth: 1
+    }));
+  }
+
+  gridLayer.moveToBottom();
+}
 
 // ============== Tools ==============
 
