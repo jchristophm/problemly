@@ -426,7 +426,7 @@ window.addDashedArrow = function () {
   const x1 = snap(stage.width() / 2);
   const y1 = snap(stage.height() / 2);
   const x2 = x1
-  const y2 = snap(y1 + 80);
+  const y2 = snap(y1 - 80);
   const pts = [x1, y1, x2, y2];
 
   const arrow = new Konva.Arrow({
