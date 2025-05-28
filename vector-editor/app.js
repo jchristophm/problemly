@@ -127,9 +127,12 @@ window.addCircle = function () {
 };
 
 window.addText = function () {
+  const w = stage.width();
+  const h = stage.height();
+  
   const text = new Konva.Text({
-    x: 100,
-    y: 100,
+    x: snap(w / 2),
+    y: snap(h / 3),
     text: 'Label',
     fontSize: 20,
     fontFamily: 'Arial',
