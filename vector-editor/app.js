@@ -1,5 +1,6 @@
 let stage, layer, gridLayer, tr;  // GLOBAL NOW
 let selectedShape = null;
+let currentEquationNode = null;
 const gridSize = 20;
 let gridVisible = true;
 
@@ -689,8 +690,6 @@ document.addEventListener('keydown', (e) => {
 });
 
 // --- LaTeX Math Modal
-let currentEquationNode = null;
-
 function openMathModal(existingNode = null) {
   currentEquationNode = existingNode;
   const modal = document.getElementById('mathModal');
