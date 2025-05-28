@@ -1,4 +1,4 @@
-let stage, layer, gridLayer;  // GLOBAL NOW
+let stage, layer, gridLayer, tr;  // GLOBAL NOW
 let selectedShape = null;
 const gridSize = 20;
 let gridVisible = true;
@@ -19,7 +19,7 @@ window.addEventListener('DOMContentLoaded', () => {
   layer = new Konva.Layer();
   stage.add(layer);
 
-  const tr = new Konva.Transformer({
+  tr = new Konva.Transformer({
     rotateEnabled: true,
     ignoreStroke: true,
     padding: 4
