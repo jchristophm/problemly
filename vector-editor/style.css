@@ -1,8 +1,9 @@
+/* rebuild */
 body {
   font-family: sans-serif;
   margin: 20px;
 }
-/* rebuild */
+
 #toolbar-top {
   display: flex;
   justify-content: center;
