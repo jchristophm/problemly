@@ -1,60 +1,73 @@
-// Comment to trigger
-const width = 360;
-const height = 360;
-const gridSize = 20;
+window.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('container');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  const gridSize = 20;
 
-const stage = new Konva.Stage({
-  container: 'container',
-  width,
-  height
-});
+  const stage = new Konva.Stage({
+    container: 'container',
+    width,
+    height
+  });
 
-stage.container().style.border = '2px solid #888';
+  stage.container().style.border = '2px solid #888';
 
-const layer = new Konva.Layer();
-stage.add(layer);
+  const layer = new Konva.Layer();
+  stage.add(layer);
 
-const tr = new Konva.Transformer({
-  rotateEnabled: true,
-  ignoreStroke: true,
-  padding: 4
-});
-layer.add(tr);
+  const tr = new Konva.Transformer({
+    rotateEnabled: true,
+    ignoreStroke: true,
+    padding: 4
+  });
+  layer.add(tr);
 
-let selectedShape = null;
+  let selectedShape = null;
 
-function snap(val) {
-  return Math.round(val / gridSize) * gridSize;
-}
-
-const gridLayer = new Konva.Layer();
-let gridVisible = true;
-
-function drawGrid() {
-  const width = stage.width();
-  const height = stage.height();
-
-  for (let i = 0; i < width / gridSize; i++) {
-    gridLayer.add(new Konva.Line({
-      points: [i * gridSize, 0, i * gridSize, height],
-      stroke: '#eee',
-      strokeWidth: 1
-    }));
+  function snap(val) {
+    return Math.round(val / gridSize) * gridSize;
   }
 
-  for (let j = 0; j < height / gridSize; j++) {
-    gridLayer.add(new Konva.Line({
-      points: [0, j * gridSize, width, j * gridSize],
-      stroke: '#eee',
-      strokeWidth: 1
-    }));
+  const gridLayer = new Konva.Layer();
+  let gridVisible = true;
+
+  function drawGrid() {
+    gridLayer.destroyChildren(); // clear any old lines
+    const width = stage.width();
+    const height = stage.height();
+
+    for (let i = 0; i < width / gridSize; i++) {
+      gridLayer.add(new Konva.Line({
+        points: [i * gridSize, 0, i * gridSize, height],
+        stroke: '#eee',
+        strokeWidth: 1
+      }));
+    }
+
+    for (let j = 0; j < height / gridSize; j++) {
+      gridLayer.add(new Konva.Line({
+        points: [0, j * gridSize, width, j * gridSize],
+        stroke: '#eee',
+        strokeWidth: 1
+      }));
+    }
+
+    stage.add(gridLayer);
+    gridLayer.moveToBottom();
   }
 
-  stage.add(gridLayer);
-  gridLayer.moveToBottom(); // make sure grid is behind everything else
-}
+  drawGrid();
 
-drawGrid();
+  // Optional: handle resizing
+  window.addEventListener('resize', () => {
+    const newWidth = container.clientWidth;
+    const newHeight = container.clientHeight;
+    stage.width(newWidth);
+    stage.height(newHeight);
+    drawGrid(); // redraw grid to match new size
+    stage.draw();
+  });
+});
 
 // ============== Tools ==============
 
