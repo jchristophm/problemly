@@ -167,7 +167,7 @@ window.addText = function () {
 };
 
 window.addLine = function () {
-  const pts = [60, 60, 160, 160];
+  const pts = [60, 120, 60, 240];
 
   const line = new Konva.Line({
     points: pts,
@@ -269,7 +269,7 @@ window.addLine = function () {
 };
 
 window.addArrow = function () {
-  const pts = [80, 80, 180, 180];
+  const pts = [180, 180, 280, 180];
 
   const arrow = new Konva.Arrow({
     points: pts,
@@ -379,7 +379,7 @@ window.addArrow = function () {
 };
 
 window.addDashedArrow = function () {
-  const pts = [180, 180, 180, 280];
+  const pts = [180, 180, 280, 180];
 
   const arrow = new Konva.Arrow({
     points: pts,
