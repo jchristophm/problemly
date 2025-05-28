@@ -1,4 +1,4 @@
-// Comment to trigger rewhatever
+// Comment to trigger
 const width = 360;
 const height = 360;
 const gridSize = 20;
