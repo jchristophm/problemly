@@ -760,7 +760,8 @@ function insertEquation() {
   });
 }
 
-window.addEquation = function () {
+// After openMathModal()
+function addEquation() {
   openMathModal();
-};
+}
 
