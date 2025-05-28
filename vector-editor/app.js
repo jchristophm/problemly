@@ -27,7 +27,6 @@ function snap(val) {
   return Math.round(val / gridSize) * gridSize;
 }
 
-const gridSize = 20;
 const gridLayer = new Konva.Layer();
 let gridVisible = true;
 
