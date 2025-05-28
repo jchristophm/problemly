@@ -348,8 +348,8 @@ window.addDashedArrow = function () {
 
   const arrow = new Konva.Arrow({
     points: pts,
-    stroke: 'red',
-    fill: 'red',
+    stroke: '#666',
+    fill: '#666',
     strokeWidth: 3,
     pointerLength: 10,
     pointerWidth: 10,
