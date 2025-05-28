@@ -66,8 +66,8 @@ function toggleGrid() {
 
 window.addBox = function () {
   const rect = new Konva.Rect({
-    x: 60,
-    y: 60,
+    x: 160,
+    y: 160,
     width: 40,
     height: 40,
     fill: 'transparent',
@@ -81,8 +81,8 @@ window.addBox = function () {
 
 window.addCircle = function () {
   const circ = new Konva.Circle({
-    x: 100,
-    y: 100,
+    x: 160,
+    y: 160,
     radius: 20,
     fill: 'transparent',
     stroke: 'green',
