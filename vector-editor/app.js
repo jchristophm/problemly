@@ -741,7 +741,7 @@ function insertEquation() {
 
   // Capture with html2canvas now that it's in DOM
   html2canvas(svg, { 
-    backgroundColor: null
+    backgroundColor: null,
     removeContainer: true
   }).then(canvas => {
     const dataURL = canvas.toDataURL();
