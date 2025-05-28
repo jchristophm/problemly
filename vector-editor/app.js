@@ -78,9 +78,12 @@ function toggleGrid() {
 }
 
 window.addBox = function () {
+  const w = stage.width();
+  const h = stage.height();
+
   const rect = new Konva.Rect({
-    x: 160,
-    y: 160,
+    x: w / 2 - 20,  // center the 40x40 box
+    y: h / 2 - 20,
     width: 40,
     height: 40,
     fill: 'transparent',
@@ -88,20 +91,25 @@ window.addBox = function () {
     strokeWidth: 2,
     draggable: true
   });
+
   enableTransformable(rect);
   layer.add(rect).draw();
 };
 
 window.addCircle = function () {
+  const w = stage.width();
+  const h = stage.height();
+
   const circ = new Konva.Circle({
-    x: 160,
-    y: 160,
+    x: w / 2,
+    y: h / 2,
     radius: 20,
     fill: 'transparent',
     stroke: 'green',
     strokeWidth: 2,
     draggable: true
   });
+
   enableTransformable(circ);
   layer.add(circ).draw();
 };
