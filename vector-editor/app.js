@@ -379,7 +379,7 @@ window.addArrow = function () {
 };
 
 window.addDashedArrow = function () {
-  const pts = [80, 80, 180, 180];
+  const pts = [180, 180, 180, 280];
 
   const arrow = new Konva.Arrow({
     points: pts,
