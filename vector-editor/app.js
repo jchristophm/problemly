@@ -1279,3 +1279,77 @@ stage.on('click tap', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Delete') window.deleteSelected();
 });
+
+let currentEquationNode = null;
+
+// --- LaTeX Math Modal
+function openMathModal(existingNode = null) {
+  currentEquationNode = existingNode;
+  const modal = document.getElementById('mathModal');
+  const input = document.getElementById('latexInput');
+  const preview = document.getElementById('preview');
+
+  input.value = existingNode?._latexSource || '';
+  preview.innerHTML = '';
+
+  modal.style.display = 'block';
+
+  input.oninput = () => {
+    try {
+      preview.innerHTML = katex.renderToString(input.value, { throwOnError: false });
+    } catch (e) {
+      preview.innerHTML = `<span style="color:red;">Invalid LaTeX</span>`;
+    }
+  };
+
+  input.oninput(); // render initial
+  input.focus();
+}
+
+function closeMathModal() {
+  document.getElementById('mathModal').style.display = 'none';
+  currentEquationNode = null;
+}
+
+function insertEquation() {
+  const input = document.getElementById('latexInput');
+  const latex = input.value;
+
+  // Render to SVG
+  const html = katex.renderToString(latex, { output: 'html', throwOnError: false });
+  const svgContainer = document.createElement('div');
+  svgContainer.innerHTML = html;
+  const svg = svgContainer.querySelector('span');
+
+  // Convert to image
+  html2canvas(svg, { backgroundColor: null }).then(canvas => {
+    const dataURL = canvas.toDataURL();
+
+    const img = new Image();
+    img.onload = () => {
+      const konvaImage = new Konva.Image({
+        x: snap(stage.width() / 2 - img.width / 2),
+        y: snap(stage.height() / 3 - img.height / 2),
+        image: img,
+        draggable: true
+      });
+
+      konvaImage._latexSource = latex;
+
+      konvaImage.on('dblclick dbltap', () => openMathModal(konvaImage));
+
+      if (currentEquationNode) {
+        currentEquationNode.image(img);
+        currentEquationNode._latexSource = latex;
+        currentEquationNode.getLayer().batchDraw();
+      } else {
+        layer.add(konvaImage);
+        layer.draw();
+      }
+
+      closeMathModal();
+    };
+    img.src = dataURL;
+  });
+}
+
