@@ -722,15 +722,24 @@ function insertEquation() {
   const input = document.getElementById('latexInput');
   const latex = input.value;
 
-  // Render to SVG
+  // Render KaTeX to HTML
   const html = katex.renderToString(latex, { output: 'html', throwOnError: false });
+
+  // Create off-screen container
   const svgContainer = document.createElement('div');
+  svgContainer.style.position = 'absolute';
+  svgContainer.style.left = '-10000px'; // keep it off screen
   svgContainer.innerHTML = html;
+  document.body.appendChild(svgContainer); // ✅ append to live DOM
+
   const svg = svgContainer.querySelector('span');
 
-  // Convert to image
+  // Capture with html2canvas now that it's in DOM
   html2canvas(svg, { backgroundColor: null }).then(canvas => {
     const dataURL = canvas.toDataURL();
+
+    // Clean up hidden container
+    document.body.removeChild(svgContainer);
 
     const img = new Image();
     img.onload = () => {
@@ -742,7 +751,6 @@ function insertEquation() {
       });
 
       konvaImage._latexSource = latex;
-
       konvaImage.on('dblclick dbltap', () => openMathModal(konvaImage));
 
       if (currentEquationNode) {
@@ -757,6 +765,8 @@ function insertEquation() {
       closeMathModal();
     };
     img.src = dataURL;
+  }).catch(err => {
+    console.error("html2canvas failed:", err);
   });
 }
 
