@@ -131,7 +131,7 @@ window.addText = function () {
   const h = stage.height();
   
   const text = new Konva.Text({
-    x: snap(w / 2),
+    x: snap(w / 2 - 20),
     y: snap(h / 3),
     text: 'Label',
     fontSize: 20,
@@ -203,7 +203,11 @@ window.addText = function () {
 };
 
 window.addLine = function () {
-  const pts = [60, 120, 60, 240];
+  const x1 = snap(stage.width() / 2 - 80);
+  const y1 = snap(2 * stage.height() / 3);
+  const x2 = snap(stage.width() / 2 + 80);
+  const y2 = y1;
+  const pts = [x1, y1, x2, y2];
 
   const line = new Konva.Line({
     points: pts,
@@ -305,7 +309,11 @@ window.addLine = function () {
 };
 
 window.addArrow = function () {
-  const pts = [180, 180, 280, 180];
+  const x1 = snap(stage.width() / 2);
+  const y1 = snap(stage.height() / 2);
+  const x2 = snap(x1 + 80);
+  const y2 = y1;
+  const pts = [x1, y1, x2, y2];
 
   const arrow = new Konva.Arrow({
     points: pts,
@@ -415,7 +423,11 @@ window.addArrow = function () {
 };
 
 window.addDashedArrow = function () {
-  const pts = [180, 180, 280, 180];
+  const x1 = snap(stage.width() / 2);
+  const y1 = snap(stage.height() / 2);
+  const x2 = x1
+  const y2 = snap(y1 + 80);
+  const pts = [x1, y1, x2, y2];
 
   const arrow = new Konva.Arrow({
     points: pts,
