@@ -771,6 +771,8 @@ html2canvas(svg, {
     });
 
     konvaImage._latexSource = latex;
+    // Optional scale down
+    konvaImage.scale({ x: 0.8, y: 0.8 });
 
     konvaImage.on('dblclick dbltap', () => openMathModal(konvaImage));
     konvaImage.on('click tap', () => {
