@@ -541,7 +541,19 @@ window.addDashedArrow = function () {
 // ============== Utility ==============
 
 function attachDiagram() {
-  const dataURL = stage.toDataURL({ pixelRatio: 2 }); // higher quality PNG
+  // Temporarily hide grid
+  const wasVisible = gridLayer.visible();
+  gridLayer.hide();
+  layer.batchDraw();
+
+  // Export PNG
+  const dataURL = stage.toDataURL({ pixelRatio: 2 });
+
+  // Show grid again
+  if (wasVisible) {
+    gridLayer.show();
+    layer.batchDraw();
+  }
 
   parent.postMessage(
     {
