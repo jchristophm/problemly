@@ -750,7 +750,7 @@ html2canvas(svg, {
 }).then(canvas => {
   // ✅ Add transparent padding
   const paddedCanvas = document.createElement('canvas');
-  const padding = 10;
+  const padding = 2;
 
   paddedCanvas.width = canvas.width + padding * 2;
   paddedCanvas.height = canvas.height + padding * 2;
