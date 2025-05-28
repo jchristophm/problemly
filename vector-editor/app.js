@@ -540,6 +540,18 @@ window.addDashedArrow = function () {
 
 // ============== Utility ==============
 
+function attachDiagram() {
+  const dataURL = stage.toDataURL({ pixelRatio: 2 }); // higher quality PNG
+
+  parent.postMessage(
+    {
+      type: "attachImage",
+      dataURL: dataURL
+    },
+    "*"
+  );
+}
+
 function createHandle(x, y, onDragMove) {
   const handle = new Konva.Circle({
     x,
