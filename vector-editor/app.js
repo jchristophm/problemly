@@ -537,6 +537,10 @@ window.addDashedArrow = function () {
   layer.draw();
 };
 
+window.addEquation = function () {
+  openMathModal();
+};
+
 // ============== Utility ==============
 
 function createHandle(x, y, onDragMove) {
