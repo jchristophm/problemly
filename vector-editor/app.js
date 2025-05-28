@@ -353,7 +353,7 @@ window.addDashedArrow = function () {
     pointerLength: 10,
     pointerWidth: 10,
     hitStrokeWidth: 20,
-    draggable: true
+    draggable: true,
     dash: [6, 4] // <- dashed stroke
   });
 
