@@ -750,8 +750,21 @@ function insertEquation() {
         draggable: true
       });
 
+      konvaImage.on('dragend', () => {
+        konvaImage.position({
+        x: snap(konvaImage.x()),
+        y: snap(konvaImage.y())
+        });
+      });
+
       konvaImage._latexSource = latex;
       konvaImage.on('dblclick dbltap', () => openMathModal(konvaImage));
+      konvaImage.on('click tap', () => {
+        deselect();
+        selectedShape = konvaImage;
+        tr.nodes([konvaImage]);
+        layer.draw();
+      });
 
       if (currentEquationNode) {
         currentEquationNode.image(img);
