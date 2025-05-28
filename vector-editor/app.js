@@ -68,8 +68,8 @@ window.addBox = function () {
   const rect = new Konva.Rect({
     x: 60,
     y: 60,
-    width: 50,
-    height: 50,
+    width: 40,
+    height: 40,
     fill: 'transparent',
     stroke: 'blue',
     strokeWidth: 2,
@@ -83,7 +83,7 @@ window.addCircle = function () {
   const circ = new Konva.Circle({
     x: 100,
     y: 100,
-    radius: 30,
+    radius: 20,
     fill: 'transparent',
     stroke: 'green',
     strokeWidth: 2,
