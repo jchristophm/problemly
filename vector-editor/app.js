@@ -342,6 +342,117 @@ window.addArrow = function () {
   layer.draw();
 };
 
+window.addDashedArrow = function () {
+  const pts = [80, 80, 180, 180];
+
+  const arrow = new Konva.Arrow({
+    points: pts,
+    stroke: 'red',
+    fill: 'red',
+    strokeWidth: 3,
+    pointerLength: 10,
+    pointerWidth: 10,
+    hitStrokeWidth: 20,
+    draggable: true
+    dash: [6, 4] // <- dashed stroke
+  });
+
+  arrow._originalStroke = arrow.stroke();
+
+  // Create persistent handles and hit zones
+  const handleStart = createHandle(pts[0], pts[1], (x, y) => {
+    const oldPts = arrow.points();
+    arrow.points([x, y, oldPts[2], oldPts[3]]);
+    if (arrow._touchHitStart) arrow._touchHitStart.position({ x, y });
+    layer.batchDraw();
+  });
+
+  const handleEnd = createHandle(pts[2], pts[3], (x, y) => {
+    const oldPts = arrow.points();
+    arrow.points([oldPts[0], oldPts[1], x, y]);
+    if (arrow._touchHitEnd) arrow._touchHitEnd.position({ x, y });
+    layer.batchDraw();
+  });
+
+  // Add invisible touch hit zones for better mobile manipulation
+  const hitStart = createTouchHitZone(handleStart);
+  const hitEnd = createTouchHitZone(handleEnd);
+
+  arrow._extraHandles = [handleStart, handleEnd];
+  arrow._touchHitStart = hitStart;
+  arrow._touchHitEnd = hitEnd;
+
+  const updateHandles = () => {
+    const [x1, y1, x2, y2] = arrow.points();
+    handleStart.position({ x: x1, y: y1 });
+    handleEnd.position({ x: x2, y: y2 });
+    hitStart.position({ x: x1, y: y1 });
+    hitEnd.position({ x: x2, y: y2 });
+
+    // Always move to top
+    handleStart.moveToTop();
+    handleEnd.moveToTop();
+    hitStart.moveToTop();
+    hitEnd.moveToTop();
+  };
+
+  arrow.on('click tap', () => {
+    deselect();
+    selectedShape = arrow;
+    arrow.stroke('orange');
+    arrow.draggable(false);
+
+    if (!handleStart.getLayer()) layer.add(handleStart);
+    if (!handleEnd.getLayer()) layer.add(handleEnd);
+    if (!hitStart.getLayer()) layer.add(hitStart);
+    if (!hitEnd.getLayer()) layer.add(hitEnd);
+
+    // 👇 SHOW everything that may have been hidden
+    handleStart.show();
+    handleEnd.show();
+    hitStart.show();
+    hitEnd.show();
+
+    updateHandles();
+    arrow.moveToBottom();
+    layer.batchDraw();
+  });
+
+  arrow.on('dragmove', updateHandles);
+
+  arrow.on('dragend', () => {
+  const offsetX = arrow.x();
+  const offsetY = arrow.y();
+  const [x1, y1, x2, y2] = arrow.points();
+
+  const newPoints = [
+    snap(x1 + offsetX),
+    snap(y1 + offsetY),
+    snap(x2 + offsetX),
+    snap(y2 + offsetY)
+  ];
+
+  arrow.points(newPoints);
+  arrow.position({ x: 0, y: 0 });
+
+  if (selectedShape === arrow && arrow._extraHandles?.length === 2) {
+    arrow._extraHandles[0].position({ x: newPoints[0], y: newPoints[1] });
+    arrow._extraHandles[1].position({ x: newPoints[2], y: newPoints[3] });
+    arrow._extraHandles[0].moveToTop();
+    arrow._extraHandles[1].moveToTop();
+  }
+
+  if (arrow._touchHitStart) arrow._touchHitStart.position({ x: newPoints[0], y: newPoints[1] });
+  if (arrow._touchHitEnd) arrow._touchHitEnd.position({ x: newPoints[2], y: newPoints[3] });
+
+  layer.batchDraw();
+  });
+
+  layer.add(arrow);
+  arrow.moveToBottom();
+  layer.draw();
+};
+
 // ============== Utility ==============
 
 function createHandle(x, y, onDragMove) {
