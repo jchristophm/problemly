@@ -702,8 +702,9 @@ window.deleteSelected = function () {
     selectedShape._touchHitEnd.destroy();
   }
 
-  if (selectedShape._latexTextNode) {
-    selectedShape._latexTextNode.destroy();
+  // Delete paired LaTeX node if it exists
+  if (selectedShape._latexExportText) {
+    selectedShape._latexExportText.destroy();
   }
 
   selectedShape.destroy();
@@ -854,7 +855,8 @@ html2canvas(svg, {
 
       layer.add(latexText);
       konvaImage._latexExportText = latexText;
-    
+      latexText._pairedImageNode = konvaImage;
+      
       layer.draw();
     }
 
