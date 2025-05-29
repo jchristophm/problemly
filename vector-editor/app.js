@@ -702,6 +702,17 @@ window.deleteSelected = function () {
     selectedShape._touchHitEnd.destroy();
   }
 
+  // Attempt to find and delete paired invisible LaTeX label
+  const layer = selectedShape.getLayer();
+  const pairedText = layer.find(node => 
+    node.name() === 'latex-export-node' &&
+    Math.abs(node.x() - selectedShape.x()) < 1 &&
+    Math.abs(node.y() - selectedShape.y()) < 1
+  )[0];
+
+  if (pairedText) {
+    pairedText.destroy();
+  }
   selectedShape.destroy();
   selectedShape = null;
   tr.nodes([]);
@@ -836,7 +847,7 @@ html2canvas(svg, {
         y: konvaImage.y(),
         text: latex,
         fontSize: 16,
-        visible: false, // invisible in canvas, but will appear in raw SVG
+        visible: true, // invisible in canvas, but will appear in raw SVG
         name: 'latex-export-node'
       });
 
