@@ -702,17 +702,10 @@ window.deleteSelected = function () {
     selectedShape._touchHitEnd.destroy();
   }
 
-  // Attempt to find and delete paired invisible LaTeX label
-  const layer = selectedShape.getLayer();
-  const pairedText = layer.find(node => 
-    node.name() === 'latex-export-node' &&
-    Math.abs(node.x() - selectedShape.x()) < 1 &&
-    Math.abs(node.y() - selectedShape.y()) < 1
-  )[0];
-
-  if (pairedText) {
-    pairedText.destroy();
+  if (selectedShape._latexTextNode) {
+    selectedShape._latexTextNode.destroy();
   }
+
   selectedShape.destroy();
   selectedShape = null;
   tr.nodes([]);
