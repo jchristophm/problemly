@@ -820,6 +820,12 @@ html2canvas(svg, {
     if (currentEquationNode) {
       currentEquationNode.image(img);
       currentEquationNode._latexSource = latex;
+
+      // 🔧 Update the paired text node as well:
+      if (currentEquationNode._latexExportText) {
+        currentEquationNode._latexExportText.text(latex);
+      }
+      
       currentEquationNode.getLayer().batchDraw();
     } else {
       layer.add(konvaImage);
