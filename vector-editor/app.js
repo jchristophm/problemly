@@ -540,19 +540,58 @@ window.addDashedArrow = function () {
 
 // ============== Utility ==============
 
+// 🔁 Replace your existing attachDiagram with this
 function attachDiagram() {
   // Temporarily hide grid
   const wasVisible = gridLayer.visible();
   gridLayer.hide();
   layer.batchDraw();
 
-  // --- Export PNG ---
+  // Export PNG
   const dataURL = stage.toDataURL({ pixelRatio: 2 });
 
-  // --- Export raw SVG ---
-  const svg = layer.toSVG({ 
-    includeHidden: true // Needed to include your invisible LaTeX text nodes
-  });
+  // --- Manual SVG Export ---
+  const svgHeader = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${stage.width()}" height="${stage.height()}">
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="black" />
+        </marker>
+      </defs>
+  `;
+
+  const svgElements = layer.getChildren().map((node) => {
+    if (node.className === 'Arrow') {
+      const pts = node.points();
+      return `<line x1="${pts[0]}" y1="${pts[1]}" x2="${pts[2]}" y2="${pts[3]}" stroke="${node.stroke()}" stroke-width="${node.strokeWidth()}" marker-end="url(#arrowhead)" />`;
+    }
+    
+    if (node.className === 'Line') {
+      const pts = node.points();
+      return `<line x1="${pts[0]}" y1="${pts[1]}" x2="${pts[2]}" y2="${pts[3]}" stroke="${node.stroke()}" stroke-width="${node.strokeWidth()}" />`;
+    }
+
+    if (node.className === 'Rect') {
+      return `<rect x="${node.x()}" y="${node.y()}" width="${node.width()}" height="${node.height()}" stroke="${node.stroke()}" fill="none" stroke-width="${node.strokeWidth()}" />`;
+    }
+
+    if (node.className === 'Circle') {
+      return `<circle cx="${node.x()}" cy="${node.y()}" r="${node.radius()}" stroke="${node.stroke()}" fill="none" stroke-width="${node.strokeWidth()}" />`;
+    }
+
+    if (node.className === 'Text') {
+      if (node.visible() === false && node.name() === 'latex-export-node') {
+        return `<text x="${node.x()}" y="${node.y()}" font-size="16">${escapeHTML(node.text())}</text>`;
+      } else {
+        return `<text x="${node.x()}" y="${node.y()}" font-size="${node.fontSize()}" fill="${node.fill()}">${escapeHTML(node.text())}</text>`;
+      }
+    }
+
+    return ''; // skip anything else
+  }).join('\n');
+
+  const svgFooter = '</svg>';
+  const rawSVG = svgHeader + svgElements + svgFooter;
 
   // Restore grid
   if (wasVisible) {
@@ -560,15 +599,18 @@ function attachDiagram() {
     layer.batchDraw();
   }
 
-  // Send both PNG and raw SVG text back to Bubble
-  parent.postMessage(
-    {
-      type: "attachImage",
-      dataURL: dataURL,
-      rawSVG: svg
-    },
-    "*"
-  );
+  // Send both to Bubble
+  parent.postMessage({
+    type: "attachImage",
+    dataURL: dataURL,
+    rawSVG: rawSVG
+  }, "*");
+}
+
+function escapeHTML(text) {
+  return text.replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;");
 }
 
 function createHandle(x, y, onDragMove) {
