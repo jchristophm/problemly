@@ -2,11 +2,8 @@
 <html>
 <head>
   <title>Inline Math Editor</title>
-  <!-- ✅ MathQuill CSS -->
+  <!-- ✅ Correct working CSS/JS for MathQuill -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mathquill/mathquill@master/build/mathquill.css" />
-
-  <!-- ✅ MathQuill JS -->
-  <script src="https://cdn.jsdelivr.net/gh/mathquill/mathquill@master/build/mathquill.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -44,53 +41,47 @@
 <body>
   <h2>Inline Reasoning Box</h2>
   <div class="toolbar">
-    <button onclick="insertMath()">Insert Math</button>
-    <button onclick="submitContent()">Submit</button>
+    <button id="insert-math">Insert Math</button>
+    <button id="submit">Submit</button>
   </div>
   <div id="editor" class="editor-container editor" contenteditable="true"></div>
 
+  <!-- ✅ Working MathQuill JS -->
+  <script src="https://cdn.jsdelivr.net/gh/mathquill/mathquill@master/build/mathquill.js"></script>
+
   <script>
-    const MQ = MathQuill.getInterface(2);
+    window.onload = function () {
+      const MQ = MathQuill.getInterface(2);
 
-    function insertMath() {
-      const selection = window.getSelection();
-      if (!selection.rangeCount) return;
+      document.getElementById('insert-math').onclick = function () {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
 
-      const range = selection.getRangeAt(0);
+        const range = selection.getRangeAt(0);
+        const span = document.createElement("span");
+        span.className = "math-field";
 
-      // Create span wrapper for math
-      const span = document.createElement("span");
-      span.className = "math-field";
+        const innerSpan = document.createElement("span");
+        innerSpan.className = "mathquill-editable";
+        span.appendChild(innerSpan);
+        range.insertNode(span);
+        range.setStartAfter(span);
+        range.setEndAfter(span);
+        selection.removeAllRanges();
+        selection.addRange(range);
 
-      // Create the MathQuill container
-      const innerSpan = document.createElement("span");
-      innerSpan.className = "mathquill-editable"; // 🔥 required for MQ to work
-      span.appendChild(innerSpan);
+        const mqField = MQ.MathField(innerSpan, {
+          spaceBehavesLikeTab: true
+        });
 
-      // Insert into DOM
-      range.insertNode(span);
-      range.setStartAfter(span);
-      range.setEndAfter(span);
-      selection.removeAllRanges();
-      selection.addRange(range);
+        mqField.focus();
+      };
 
-      // Initialize MathQuill
-      const mqField = MQ.MathField(innerSpan, {
-        spaceBehavesLikeTab: true,
-        handlers: {
-          edit: function() {
-            // Hook for future saving
-          }
-        }
-      });
-
-      mqField.focus();
-    }
-
-    function submitContent() {
-      const editor = document.getElementById('editor');
-      alert("Raw HTML Submitted:\\n\\n" + editor.innerHTML);
-    }
+      document.getElementById('submit').onclick = function () {
+        const editor = document.getElementById('editor');
+        alert("Raw HTML Submitted:\\n\\n" + editor.innerHTML);
+      };
+    };
   </script>
 </body>
 </html>
