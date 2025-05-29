@@ -54,31 +54,39 @@
       if (!selection.rangeCount) return;
 
       const range = selection.getRangeAt(0);
+
+      // Create span wrapper for math
       const span = document.createElement("span");
       span.className = "math-field";
+
+      // Create the MathQuill container
       const innerSpan = document.createElement("span");
+      innerSpan.className = "mathquill-editable"; // 🔥 required for MQ to work
       span.appendChild(innerSpan);
+
+      // Insert into DOM
       range.insertNode(span);
       range.setStartAfter(span);
       range.setEndAfter(span);
       selection.removeAllRanges();
       selection.addRange(range);
 
+      // Initialize MathQuill
       const mqField = MQ.MathField(innerSpan, {
         spaceBehavesLikeTab: true,
         handlers: {
           edit: function() {
-            // Optional: do something on edit
+            // Hook for future saving
           }
         }
       });
+
       mqField.focus();
     }
 
     function submitContent() {
       const editor = document.getElementById('editor');
-      const content = editor.innerHTML;
-      alert("Raw HTML submitted:\\n" + content);
+      alert("Raw HTML Submitted:\\n\\n" + editor.innerHTML);
     }
   </script>
 </body>
