@@ -2,7 +2,11 @@
 <html>
 <head>
   <title>Inline Math Editor</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css" />
+  <!-- ✅ MathQuill CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mathquill/mathquill@master/build/mathquill.css" />
+
+  <!-- ✅ MathQuill JS -->
+  <script src="https://cdn.jsdelivr.net/gh/mathquill/mathquill@master/build/mathquill.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -45,7 +49,6 @@
   </div>
   <div id="editor" class="editor-container editor" contenteditable="true"></div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
   <script>
     const MQ = MathQuill.getInterface(2);
 
