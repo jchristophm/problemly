@@ -1,99 +1,86 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Reasoning Box (Toggle Text/Math)</title>
+  <title>Inline Math Editor</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css" />
   <style>
     body {
       font-family: sans-serif;
       padding: 20px;
     }
-    .reasoning-box {
+    .editor-container {
       border: 1px solid #ccc;
-      border-radius: 12px;
-      padding: 16px;
-      max-width: 600px;
+      border-radius: 8px;
+      padding: 12px;
+      max-width: 700px;
+      min-height: 150px;
     }
-    .mode-buttons {
-      margin-bottom: 10px;
+    .editor {
+      min-height: 100px;
+      outline: none;
     }
-    .mode-buttons button {
-      margin-right: 10px;
-      padding: 6px 10px;
+    .toolbar {
+      margin-bottom: 12px;
+    }
+    .toolbar button {
       font-size: 16px;
+      margin-right: 10px;
+      padding: 6px 12px;
       cursor: pointer;
     }
-    .text-mode, .math-mode {
-      display: none;
-      margin-bottom: 16px;
-    }
-    .text-area {
-      width: 100%;
-      min-height: 80px;
-      font-size: 1rem;
-      padding: 8px;
-    }
-    .math-field {
-      border: 1px solid #aaa;
-      padding: 6px;
-      border-radius: 6px;
-      min-height: 40px;
-      background-color: #f9f9f9;
+    .mathquill-editable {
+      display: inline-block;
+      min-width: 50px;
+      margin: 0 4px;
+      padding: 2px 4px;
+      border-bottom: 1px dotted #666;
     }
   </style>
 </head>
 <body>
-  <h2>Reasoning Box</h2>
-  <div class="reasoning-box">
-    <div class="mode-buttons">
-      <button onclick="setMode('text')">T</button>
-      <button onclick="setMode('math')">M</button>
-      <button onclick="submitReasoning()">Submit</button>
-    </div>
-
-    <div id="text-mode" class="text-mode">
-      <textarea id="text-input" class="text-area" placeholder="Type your reasoning..."></textarea>
-    </div>
-
-    <div id="math-mode" class="math-mode">
-      <div id="math-field" class="math-field"></div>
-    </div>
+  <h2>Inline Reasoning Box</h2>
+  <div class="toolbar">
+    <button onclick="insertMath()">Insert Math</button>
+    <button onclick="submitContent()">Submit</button>
   </div>
+  <div id="editor" class="editor-container editor" contenteditable="true"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
   <script>
-    let currentMode = 'text';
-    const textDiv = document.getElementById('text-mode');
-    const mathDiv = document.getElementById('math-mode');
-
     const MQ = MathQuill.getInterface(2);
-    const mathFieldSpan = document.getElementById('math-field');
-    const mathField = MQ.MathField(mathFieldSpan, {
-      spaceBehavesLikeTab: true
-    });
 
-    function setMode(mode) {
-      currentMode = mode;
-      if (mode === 'text') {
-        textDiv.style.display = 'block';
-        mathDiv.style.display = 'none';
-      } else {
-        textDiv.style.display = 'none';
-        mathDiv.style.display = 'block';
-        mathField.focus();
-      }
+    function insertMath() {
+      const selection = window.getSelection();
+      if (!selection.rangeCount) return;
+
+      const range = selection.getRangeAt(0);
+      const span = document.createElement("span");
+      span.className = "math-field";
+      const innerSpan = document.createElement("span");
+      span.appendChild(innerSpan);
+      range.insertNode(span);
+      range.setStartAfter(span);
+      range.setEndAfter(span);
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      const mqField = MQ.MathField(innerSpan, {
+        spaceBehavesLikeTab: true,
+        handlers: {
+          edit: function() {
+            // Optional: do something on edit
+          }
+        }
+      });
+      mqField.focus();
     }
 
-    function submitReasoning() {
-      if (currentMode === 'text') {
-        alert("Submitted Text: " + document.getElementById('text-input').value);
-      } else {
-        alert("Submitted Math: " + mathField.latex());
-      }
+    function submitContent() {
+      const editor = document.getElementById('editor');
+      const content = editor.innerHTML;
+      alert("Raw HTML submitted:\\n" + content);
     }
-
-    // Initialize in text mode
-    setMode('text');
   </script>
 </body>
 </html>
+
