@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Reasoning Box</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
+  <title>Reasoning Box (Toggle Text/Math)</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css" />
   <style>
     body {
@@ -15,12 +14,24 @@
       padding: 16px;
       max-width: 600px;
     }
+    .mode-buttons {
+      margin-bottom: 10px;
+    }
+    .mode-buttons button {
+      margin-right: 10px;
+      padding: 6px 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .text-mode, .math-mode {
+      display: none;
+      margin-bottom: 16px;
+    }
     .text-area {
       width: 100%;
       min-height: 80px;
       font-size: 1rem;
       padding: 8px;
-      margin-bottom: 16px;
     }
     .math-field {
       border: 1px solid #aaa;
@@ -28,58 +39,61 @@
       border-radius: 6px;
       min-height: 40px;
       background-color: #f9f9f9;
-      margin-bottom: 16px;
-    }
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .toolbar button {
-      padding: 6px 10px;
-      font-size: 16px;
-      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <h2>Reasoning Box</h2>
   <div class="reasoning-box">
-    <textarea class="text-area" placeholder="Explain your reasoning here..."></textarea>
-    <div class="toolbar">
-      <button onclick="insert('\\frac{}{}')">a⁄b</button>
-      <button onclick="insert('x^2')">x²</button>
-      <button onclick="insert('\\sqrt{}')">√</button>
-      <button onclick="insert('F_x')">Fₓ</button>
-      <button onclick="insert('\\theta')">θ</button>
-      <button onclick="insert('\\Delta')">Δ</button>
-      <button onclick="insert('+')">+</button>
-      <button onclick="insert('=')">=</button>
+    <div class="mode-buttons">
+      <button onclick="setMode('text')">T</button>
+      <button onclick="setMode('math')">M</button>
+      <button onclick="submitReasoning()">Submit</button>
     </div>
-    <div id="math-field" class="math-field"></div>
+
+    <div id="text-mode" class="text-mode">
+      <textarea id="text-input" class="text-area" placeholder="Type your reasoning..."></textarea>
+    </div>
+
+    <div id="math-mode" class="math-mode">
+      <div id="math-field" class="math-field"></div>
+    </div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
   <script>
-  window.onload = function () {
+    let currentMode = 'text';
+    const textDiv = document.getElementById('text-mode');
+    const mathDiv = document.getElementById('math-mode');
+
     const MQ = MathQuill.getInterface(2);
     const mathFieldSpan = document.getElementById('math-field');
     const mathField = MQ.MathField(mathFieldSpan, {
-      spaceBehavesLikeTab: true,
-      handlers: {
-        edit: function() {
-          // mathField.latex() is accessible here
-        }
-      }
+      spaceBehavesLikeTab: true
     });
 
-    // Button handler example
-    window.insert = function(latex) {
-      mathField.cmd(latex);
-      mathField.focus();
+    function setMode(mode) {
+      currentMode = mode;
+      if (mode === 'text') {
+        textDiv.style.display = 'block';
+        mathDiv.style.display = 'none';
+      } else {
+        textDiv.style.display = 'none';
+        mathDiv.style.display = 'block';
+        mathField.focus();
+      }
     }
-  };
-</script>
-  
+
+    function submitReasoning() {
+      if (currentMode === 'text') {
+        alert("Submitted Text: " + document.getElementById('text-input').value);
+      } else {
+        alert("Submitted Math: " + mathField.latex());
+      }
+    }
+
+    // Initialize in text mode
+    setMode('text');
+  </script>
 </body>
 </html>
