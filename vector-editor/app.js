@@ -833,10 +833,10 @@ html2canvas(svg, {
        // Create invisible text node for SVG export
       const latexText = new Konva.Text({
         x: konvaImage.x(),
-        y: konvaImage.y() + 10,
+        y: konvaImage.y(),
         text: latex,
         fontSize: 16,
-        visible: true, // invisible in canvas, but will appear in raw SVG
+        visible: false, // invisible in canvas, but will appear in raw SVG
         name: 'latex-export-node'
       });
 
