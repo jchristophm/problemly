@@ -820,18 +820,25 @@ html2canvas(svg, {
     } else {
       layer.add(konvaImage);
 
-      // Create plain text LaTeX label for SVG export
-      const plainText = new Konva.Text({
+       // Create invisible text node for SVG export
+      const latexText = new Konva.Text({
         x: konvaImage.x(),
-        y: konvaImage.y() + img.height * 0.8 + 4, // slightly below image
+        y: konvaImage.y(),
         text: latex,
-        fontSize: 10,
-        fontFamily: 'Courier New',
-        fill: '#999999',
-        listening: false,
-        name: 'svgLabel'
+        fontSize: 16,
+        visible: false, // invisible in canvas, but will appear in raw SVG
+        name: 'latex-export-node'
       });
-      layer.add(plainText);
+
+      // Bind movement: update position when image moves
+      konvaImage.on('dragmove', () => {
+        latexText.position({
+          x: konvaImage.x(),
+          y: konvaImage.y()
+        });
+      });
+
+      layer.add(latexText);
     
       layer.draw();
     }
