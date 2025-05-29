@@ -1,3 +1,4 @@
+// Reuild
 let stage, layer, gridLayer, tr;  // GLOBAL NOW
 let selectedShape = null;
 let currentEquationNode = null;
