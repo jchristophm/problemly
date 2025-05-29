@@ -2,8 +2,8 @@
 <html>
 <head>
   <title>Inline Math Editor</title>
-  <!-- ✅ Correct working CSS/JS for MathQuill -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mathquill/mathquill@master/build/mathquill.css" />
+  <!-- ✅ Use the correct CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/mathquill@0.10.1/build/mathquill.css" />
   <style>
     body {
       font-family: sans-serif;
@@ -46,9 +46,8 @@
   </div>
   <div id="editor" class="editor-container editor" contenteditable="true"></div>
 
-  <!-- ✅ Working MathQuill JS -->
-  <script src="https://cdn.jsdelivr.net/gh/mathquill/mathquill@master/build/mathquill.js"></script>
-
+  <!-- ✅ Working JS script LAST -->
+  <script src="https://unpkg.com/mathquill@0.10.1/build/mathquill.min.js"></script>
   <script>
     window.onload = function () {
       const MQ = MathQuill.getInterface(2);
@@ -85,4 +84,3 @@
   </script>
 </body>
 </html>
-
