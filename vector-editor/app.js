@@ -731,6 +731,10 @@ function openMathModal(existingNode = null) {
   input.oninput = () => {
     try {
       preview.innerHTML = katex.renderToString(input.value, { throwOnError: false });
+      // 👇 ADD THIS to sync hidden LaTeX text with live edits
+      if (currentEquationNode?._latexExportText) {
+        currentEquationNode._latexExportText.text(input.value);
+      }
     } catch (e) {
       preview.innerHTML = `<span style="color:red;">Invalid LaTeX</span>`;
     }
@@ -839,6 +843,7 @@ html2canvas(svg, {
       });
 
       layer.add(latexText);
+      konvaImage._latexExportText = latexText;
     
       layer.draw();
     }
