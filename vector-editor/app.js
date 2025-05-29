@@ -819,6 +819,20 @@ html2canvas(svg, {
       currentEquationNode.getLayer().batchDraw();
     } else {
       layer.add(konvaImage);
+
+      // Create plain text LaTeX label for SVG export
+      const plainText = new Konva.Text({
+        x: konvaImage.x(),
+        y: konvaImage.y() + img.height * 0.8 + 4, // slightly below image
+        text: latex,
+        fontSize: 10,
+        fontFamily: 'Courier New',
+        fill: '#999999',
+        listening: false,
+        name: 'svgLabel'
+      });
+      layer.add(plainText);
+    
       layer.draw();
     }
 
