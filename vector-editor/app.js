@@ -546,19 +546,26 @@ function attachDiagram() {
   gridLayer.hide();
   layer.batchDraw();
 
-  // Export PNG
+  // --- Export PNG ---
   const dataURL = stage.toDataURL({ pixelRatio: 2 });
 
-  // Show grid again
+  // --- Export raw SVG ---
+  const svg = stage.toSVG({ 
+    includeHidden: true // Needed to include your invisible LaTeX text nodes
+  });
+
+  // Restore grid
   if (wasVisible) {
     gridLayer.show();
     layer.batchDraw();
   }
 
+  // Send both PNG and raw SVG text back to Bubble
   parent.postMessage(
     {
       type: "attachImage",
-      dataURL: dataURL
+      dataURL: dataURL,
+      rawSVG: svg
     },
     "*"
   );
