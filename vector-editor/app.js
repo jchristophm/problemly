@@ -550,7 +550,7 @@ function attachDiagram() {
   const dataURL = stage.toDataURL({ pixelRatio: 2 });
 
   // --- Export raw SVG ---
-  const svg = stage.toSVG({ 
+  const svg = layer.toSVG({ 
     includeHidden: true // Needed to include your invisible LaTeX text nodes
   });
 
