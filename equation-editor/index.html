@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MiniMathEditor</title>
+  <title>MiniMathEditor v2</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <style>
@@ -21,8 +21,9 @@
       box-shadow: 0 0 15px rgba(0,0,0,0.1);
       width: 100%;
       max-width: 600px;
+      position: relative;
     }
-    .editable {
+    #renderedField {
       min-height: 60px;
       font-size: 1.25rem;
       padding: 0.75rem;
@@ -30,44 +31,68 @@
       border-radius: 6px;
       background: #fff;
       outline: none;
-      white-space: pre-wrap;
+      white-space: nowrap;
+    }
+    #ghostInput {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
   <div class="editor-container">
     <h2>MiniMathEditor</h2>
-    <div id="editor" class="editable" contenteditable="true"></div>
+    <div id="renderedField" tabindex="0"></div>
+    <input id="ghostInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
   </div>
 
   <script>
-    const editor = document.getElementById('editor');
+    const renderedField = document.getElementById('renderedField');
+    const ghostInput = document.getElementById('ghostInput');
+    let tokens = [];
 
-    function toLatex(str) {
-      return str
-        .replace(/sqrt\(([^\)]+)\)/g, '\\sqrt{$1}')
-        .replace(/([a-zA-Z0-9]+)\^([a-zA-Z0-9]+)/g, '$1^{$2}')
-        .replace(/([a-zA-Z0-9]+)_([a-zA-Z0-9]+)/g, '$1_{$2}')
-        .replace(/([0-9a-zA-Z]+)\/(\d+|[a-zA-Z]+)/g, '\\frac{$1}{$2}')
-        .replace(/\bpi\b/g, '\\pi');
-    }
-
-    function renderInlineMath() {
-      const raw = editor.innerText;
-      const latex = toLatex(raw);
+    function renderTokens() {
+      const latex = tokens.map(tok => tok.latex).join(' ');
       try {
-        katex.render(latex, editor, {
-          throwOnError: false,
-          displayMode: false
+        katex.render(latex || '\textcolor{gray}{Start typing...}', renderedField, {
+          throwOnError: false
         });
       } catch (err) {
-        editor.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
+        renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
       }
     }
 
-    editor.addEventListener('input', () => {
-      renderInlineMath();
+    function insertChar(char) {
+      if (char === '^') {
+        tokens.push({ type: 'sup', latex: '^{}' });
+      } else if (char === '/') {
+        // basic 1/2 support, can expand later
+        const last = tokens.pop();
+        if (last) {
+          tokens.push({ type: 'frac', latex: `\\frac{${last.latex}}{}` });
+        } else {
+          tokens.push({ type: 'frac', latex: '\\frac{}{ }' });
+        }
+      } else {
+        tokens.push({ type: 'char', latex: char });
+      }
+      renderTokens();
+    }
+
+    renderedField.addEventListener('click', () => ghostInput.focus());
+
+    ghostInput.addEventListener('input', (e) => {
+      const val = ghostInput.value;
+      ghostInput.value = '';
+      if (val) insertChar(val);
     });
+
+    // Enable typing
+    renderedField.addEventListener('focus', () => ghostInput.focus());
+
+    // Initial render
+    renderTokens();
   </script>
 </body>
 </html>
