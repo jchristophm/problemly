@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MiniMathEditor v4</title>
+  <title>MiniMathEditor v5</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <style>
@@ -38,17 +38,6 @@
       opacity: 0;
       pointer-events: none;
     }
-    .caret {
-      display: inline-block;
-      width: 1px;
-      background: black;
-      height: 1.2em;
-      vertical-align: -0.2em;
-      animation: blink 1s step-end infinite;
-    }
-    @keyframes blink {
-      50% { background: transparent; }
-    }
   </style>
 </head>
 <body>
@@ -61,105 +50,127 @@
   <script>
     const renderedField = document.getElementById('renderedField');
     const ghostInput = document.getElementById('ghostInput');
+
     let tokens = [];
-    let caretIndex = 0;
+    let caretPath = []; // e.g., [2, 'right', 1]
+
+    function setCaret(path) {
+      caretPath = path;
+    }
+
+    function insertAtPath(tokens, path, char) {
+      let ref = tokens;
+      for (let i = 0; i < path.length - 1; i++) {
+        ref = ref[path[i]];
+      }
+      const idx = path[path.length - 1];
+      ref.splice(idx, 0, char);
+    }
+
+    function renderTokensWithCaret(tokens, path) {
+      const deepCopy = JSON.parse(JSON.stringify(tokens));
+      let ref = deepCopy;
+      for (let i = 0; i < path.length - 1; i++) {
+        ref = ref[path[i]];
+      }
+      ref.splice(path[path.length - 1], 0, { type: 'caret' });
+      return deepCopy;
+    }
 
     function tokenToLatex(token) {
-      if (token.type === 'frac') {
-        const left = token.left.map(tokenToLatex).join('') || '{}';
-        const right = token.right.map(tokenToLatex).join('') || '{}';
-        return `\\frac{${left}}{${right}}`;
-      } else if (token.type === 'sup') {
-        const base = token.base.map(tokenToLatex).join('') || '{}';
-        const exponent = token.exponent.map(tokenToLatex).join('') || '{}';
-        return `${base}^{${exponent}}`;
-      } else if (token.type === 'sub') {
-        const base = token.base.map(tokenToLatex).join('') || '{}';
-        const sub = token.sub.map(tokenToLatex).join('') || '{}';
-        return `${base}_{${sub}}`;
-      } else if (token.type === 'caret') {
-        return '\\textcolor{gray}{|}';
-      } else {
-        return token.latex;
+      if (!token) return '';
+      switch (token.type) {
+        case 'frac':
+          return `\\frac{${(token.left || []).map(tokenToLatex).join('') || '{}'}}{${(token.right || []).map(tokenToLatex).join('') || '{}'}}`;
+        case 'sup':
+          return `${(token.base || []).map(tokenToLatex).join('') || '{}'}^{${(token.exponent || []).map(tokenToLatex).join('') || '{}'}}`;
+        case 'sub':
+          return `${(token.base || []).map(tokenToLatex).join('') || '{}'}_{${(token.sub || []).map(tokenToLatex).join('') || '{}'}}`;
+        case 'group':
+          return `\\left(${(token.tokens || []).map(tokenToLatex).join('')}\\right)`;
+        case 'caret':
+          return '\\textcolor{gray}{|}';
+        case 'char':
+        default:
+          return token.latex || '';
       }
     }
 
-    function renderTokens() {
+    function render() {
       if (tokens.length === 0) {
         katex.render('\\textcolor{gray}{Start typing...}', renderedField, { throwOnError: false });
         return;
       }
-
-      const tokensWithCaret = [...tokens];
-      tokensWithCaret.splice(caretIndex, 0, { type: 'caret' });
-
+      const withCaret = renderTokensWithCaret(tokens, caretPath);
+      const latex = withCaret.map(tokenToLatex).join('');
       try {
-        const latex = tokensWithCaret.map(tokenToLatex).join('');
         katex.render(latex, renderedField, { throwOnError: false });
-      } catch (err) {
+      } catch (e) {
         renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
       }
     }
 
     function insertChar(char) {
-      let token;
-
       if (char === '^') {
-        const base = tokens.splice(Math.max(0, caretIndex - 1), 1);
-        token = { type: 'sup', base: base, exponent: [] };
-        tokens.splice(caretIndex - 1, 0, token);
-        caretIndex = caretIndex;
-        renderTokens();
+        const base = tokens.splice(Math.max(0, caretPath[0] - 1), 1);
+        const sup = { type: 'sup', base: base, exponent: [] };
+        tokens.splice(Math.max(0, caretPath[0] - 1), 0, sup);
+        setCaret([caretPath[0] - 1, 'exponent', 0]);
+        render();
         return;
       }
 
       if (char === '_') {
-        const base = tokens.splice(Math.max(0, caretIndex - 1), 1);
-        token = { type: 'sub', base: base, sub: [] };
-        tokens.splice(caretIndex - 1, 0, token);
-        caretIndex = caretIndex;
-        renderTokens();
+        const base = tokens.splice(Math.max(0, caretPath[0] - 1), 1);
+        const sub = { type: 'sub', base: base, sub: [] };
+        tokens.splice(Math.max(0, caretPath[0] - 1), 0, sub);
+        setCaret([caretPath[0] - 1, 'sub', 0]);
+        render();
         return;
       }
 
       if (char === '/') {
-        const left = tokens.splice(Math.max(0, caretIndex - 1), 1);
-        token = { type: 'frac', left: left, right: [] };
-        tokens.splice(caretIndex - 1, 0, token);
-        caretIndex = caretIndex;
-        renderTokens();
+        const left = tokens.splice(Math.max(0, caretPath[0] - 1), 1);
+        const frac = { type: 'frac', left: left, right: [] };
+        tokens.splice(Math.max(0, caretPath[0] - 1), 0, frac);
+        setCaret([caretPath[0] - 1, 'right', 0]);
+        render();
         return;
       }
 
-      // insert into current nested structure if needed
-      const current = tokens[caretIndex - 1];
-      if (current && (current.type === 'sup' || current.type === 'frac' || current.type === 'sub')) {
-        const target = current.type === 'sup' ? current.exponent : current.type === 'frac' ? current.right : current.sub;
-        target.push({ type: 'char', latex: char });
-        caretIndex++;
-        renderTokens();
+      if (char === '(') {
+        const group = { type: 'group', tokens: [] };
+        tokens.splice(caretPath[0], 0, group);
+        setCaret([caretPath[0], 'tokens', 0]);
+        render();
         return;
       }
 
-      token = { type: 'char', latex: char };
-      tokens.splice(caretIndex, 0, token);
-      caretIndex++;
-      renderTokens();
+      if (char === ')') {
+        setCaret([tokens.length, 0]);
+        render();
+        return;
+      }
+
+      insertAtPath(tokens, caretPath, { type: 'char', latex: char });
+      caretPath[caretPath.length - 1]++;
+      render();
     }
 
     function deleteChar() {
-      if (caretIndex > 0) {
-        tokens.splice(caretIndex - 1, 1);
-        caretIndex--;
-        renderTokens();
+      let ref = tokens;
+      for (let i = 0; i < caretPath.length - 1; i++) ref = ref[caretPath[i]];
+      const idx = caretPath[caretPath.length - 1];
+      if (idx > 0) {
+        ref.splice(idx - 1, 1);
+        caretPath[caretPath.length - 1]--;
+        render();
       }
     }
 
     function moveCaret(dir) {
-      caretIndex += dir;
-      if (caretIndex < 0) caretIndex = 0;
-      if (caretIndex > tokens.length) caretIndex = tokens.length;
-      renderTokens();
+      caretPath[caretPath.length - 1] += dir;
+      render();
     }
 
     renderedField.addEventListener('click', () => ghostInput.focus());
@@ -184,7 +195,8 @@
     });
 
     renderedField.addEventListener('focus', () => ghostInput.focus());
-    renderTokens();
+    setCaret([0]);
+    render();
   </script>
 </body>
 </html>
