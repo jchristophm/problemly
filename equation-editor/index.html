@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MiniMathEditor v5</title>
+  <title>MiniMathEditor v6</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <style>
@@ -52,29 +52,14 @@
     const ghostInput = document.getElementById('ghostInput');
 
     let tokens = [];
-    let caretPath = []; // e.g., [2, 'right', 1]
+    let caretPath = [0];
 
-    function setCaret(path) {
-      caretPath = path;
-    }
-
-    function insertAtPath(tokens, path, char) {
+    function resolvePath(path) {
       let ref = tokens;
       for (let i = 0; i < path.length - 1; i++) {
         ref = ref[path[i]];
       }
-      const idx = path[path.length - 1];
-      ref.splice(idx, 0, char);
-    }
-
-    function renderTokensWithCaret(tokens, path) {
-      const deepCopy = JSON.parse(JSON.stringify(tokens));
-      let ref = deepCopy;
-      for (let i = 0; i < path.length - 1; i++) {
-        ref = ref[path[i]];
-      }
-      ref.splice(path[path.length - 1], 0, { type: 'caret' });
-      return deepCopy;
+      return { ref, index: path[path.length - 1] };
     }
 
     function tokenToLatex(token) {
@@ -96,6 +81,16 @@
       }
     }
 
+    function renderTokensWithCaret(tokens, path) {
+      const deepCopy = JSON.parse(JSON.stringify(tokens));
+      let ref = deepCopy;
+      for (let i = 0; i < path.length - 1; i++) {
+        ref = ref[path[i]];
+      }
+      ref.splice(path[path.length - 1], 0, { type: 'caret' });
+      return deepCopy;
+    }
+
     function render() {
       if (tokens.length === 0) {
         katex.render('\\textcolor{gray}{Start typing...}', renderedField, { throwOnError: false });
@@ -111,65 +106,77 @@
     }
 
     function insertChar(char) {
+      const { ref, index } = resolvePath(caretPath);
       if (char === '^') {
-        const base = tokens.splice(Math.max(0, caretPath[0] - 1), 1);
+        const base = ref.splice(index - 1, 1);
         const sup = { type: 'sup', base: base, exponent: [] };
-        tokens.splice(Math.max(0, caretPath[0] - 1), 0, sup);
-        setCaret([caretPath[0] - 1, 'exponent', 0]);
-        render();
-        return;
+        ref.splice(index - 1, 0, sup);
+        caretPath = caretPath.slice(0, -1).concat(index - 1, 'exponent', 0);
+        render(); return;
       }
-
       if (char === '_') {
-        const base = tokens.splice(Math.max(0, caretPath[0] - 1), 1);
+        const base = ref.splice(index - 1, 1);
         const sub = { type: 'sub', base: base, sub: [] };
-        tokens.splice(Math.max(0, caretPath[0] - 1), 0, sub);
-        setCaret([caretPath[0] - 1, 'sub', 0]);
-        render();
-        return;
+        ref.splice(index - 1, 0, sub);
+        caretPath = caretPath.slice(0, -1).concat(index - 1, 'sub', 0);
+        render(); return;
       }
-
       if (char === '/') {
-        const left = tokens.splice(Math.max(0, caretPath[0] - 1), 1);
+        const left = ref.splice(index - 1, 1);
         const frac = { type: 'frac', left: left, right: [] };
-        tokens.splice(Math.max(0, caretPath[0] - 1), 0, frac);
-        setCaret([caretPath[0] - 1, 'right', 0]);
-        render();
-        return;
+        ref.splice(index - 1, 0, frac);
+        caretPath = caretPath.slice(0, -1).concat(index - 1, 'right', 0);
+        render(); return;
       }
-
       if (char === '(') {
         const group = { type: 'group', tokens: [] };
-        tokens.splice(caretPath[0], 0, group);
-        setCaret([caretPath[0], 'tokens', 0]);
-        render();
-        return;
+        ref.splice(index, 0, group);
+        caretPath = caretPath.slice(0, -1).concat(index, 'tokens', 0);
+        render(); return;
       }
-
       if (char === ')') {
-        setCaret([tokens.length, 0]);
-        render();
-        return;
+        // attempt to climb one level out of group
+        if (caretPath.includes('tokens')) {
+          const groupIndex = caretPath.lastIndexOf('tokens');
+          caretPath = caretPath.slice(0, groupIndex).concat(caretPath[groupIndex - 1] + 1);
+          render(); return;
+        }
       }
-
-      insertAtPath(tokens, caretPath, { type: 'char', latex: char });
+      ref.splice(index, 0, { type: 'char', latex: char });
       caretPath[caretPath.length - 1]++;
       render();
     }
 
     function deleteChar() {
-      let ref = tokens;
-      for (let i = 0; i < caretPath.length - 1; i++) ref = ref[caretPath[i]];
-      const idx = caretPath[caretPath.length - 1];
-      if (idx > 0) {
-        ref.splice(idx - 1, 1);
+      const { ref, index } = resolvePath(caretPath);
+      if (index > 0) {
+        ref.splice(index - 1, 1);
         caretPath[caretPath.length - 1]--;
         render();
       }
     }
 
     function moveCaret(dir) {
-      caretPath[caretPath.length - 1] += dir;
+      let path = [...caretPath];
+      const { ref, index } = resolvePath(path);
+      const newIndex = index + dir;
+      if (newIndex >= 0 && newIndex <= ref.length) {
+        caretPath = path.slice(0, -1).concat(newIndex);
+      } else {
+        // Climb out of nested structure if possible
+        for (let i = path.length - 2; i >= 0; i -= 2) {
+          const parentPath = path.slice(0, i);
+          const { ref: pRef, index: pIdx } = resolvePath(parentPath);
+          if (dir > 0 && pIdx < pRef.length) {
+            caretPath = parentPath.slice(0, -1).concat(pIdx + 1);
+            break;
+          }
+          if (dir < 0 && pIdx > 0) {
+            caretPath = parentPath.slice(0, -1).concat(pIdx - 1);
+            break;
+          }
+        }
+      }
       render();
     }
 
@@ -191,13 +198,14 @@
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         moveCaret(1);
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        moveCaret(1);
       }
     });
 
     renderedField.addEventListener('focus', () => ghostInput.focus());
-    setCaret([0]);
     render();
   </script>
 </body>
 </html>
-
