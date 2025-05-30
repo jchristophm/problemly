@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Equation Editor</title>
+  <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive.core.css" />
+  <script src="https://unpkg.com/mathlive/dist/mathlive.min.js"></script>
+  <style>
+    /* Reset and structure */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+
+    /* Fixed toolbars */
+    #toolbar-top,
+    #toolbar-bottom {
+      position: fixed;
+      left: 0;
+      right: 0;
+      height: 50px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      z-index: 10;
+      padding: 0 12px;
+    }
+
+    #toolbar-top {
+      top: 0;
+    }
+
+    #toolbar-bottom {
+      bottom: 0;
+    }
+
+    /* Canvas container fills in between */
+    #main-canvas {
+      position: absolute;
+      top: 50px;        /* matches toolbar height */
+      bottom: 50px;     /* matches toolbar height */
+      left: 0;
+      right: 0;
+      overflow: auto;
+      background: #f9f9f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Buttons */
+    [id^="toolbar"] button {
+      background: #f5f5f5;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 40px;
+      height: 40px;
+      padding: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s ease;
+      color: #333;
+    }
+
+    [id^="toolbar"] button:hover {
+      background: #e0e0e0;
+    }
+
+    .icon {
+      width: 30px;
+      height: 30px;
+      stroke: currentColor;
+      fill: none;
+      display: block;
+    }
+
+    #container {
+      border: 2px solid #888;
+      width: 90%;
+      height: 90%;
+      box-sizing: border-box;
+      background: white;
+      padding: 12px;
+    }
+
+    math-field {
+      width: 100%;
+      font-size: 24px;
+      height: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div id="toolbar-top">
+    <button data-latex="\\theta">θ</button>
+    <button data-latex="\\pi">π</button>
+    <button data-latex="\\mu">μ</button>
+    <button data-latex="\\rho">ρ</button>
+    <button data-latex="\\Delta">Δ</button>
+    <button data-latex="\\sqrt{}">√</button>
+    <button data-latex="x^2">x²</button>
+    <button data-latex="\\frac{}{}">a/b</button>
+    <button data-latex="\\sum">∑</button>
+    <button data-latex="\\int">∫</button>
+    <button data-latex="\\vec{}">𝐅⃗</button>
+    <button data-latex="\\rightarrow">→</button>
+  </div>
+
+  <div id="main-canvas">
+    <div id="container">
+      <math-field id="mathEditor" virtual-keyboard-mode="onfocus"></math-field>
+    </div>
+  </div>
+
+  <div id="toolbar-bottom">
+    <button onclick="submitEquation()">✔</button>
+    <button onclick="cancelEquation()">✖</button>
+  </div>
+
+  <script>
+    const editor = document.getElementById('mathEditor');
+
+    document.querySelectorAll('#toolbar-top button').forEach(button => {
+      button.addEventListener('click', () => {
+        const latex = button.getAttribute('data-latex');
+        if (latex) {
+          editor.insert(latex);
+          editor.focus();
+        }
+      });
+    });
+
+    function submitEquation() {
+      const latex = editor.getValue('latex');
+      window.parent.postMessage({ type: 'mathlive-submit', latex }, '*');
+    }
+
+    function cancelEquation() {
+      window.parent.postMessage({ type: 'mathlive-cancel' }, '*');
+    }
+  </script>
+</body>
+</html>
