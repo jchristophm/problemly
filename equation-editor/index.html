@@ -105,16 +105,6 @@ function render() {
   }
 }
 
-
-  const withCaret = renderTokensWithCaret(base, caretPath);
-  const latex = withCaret.map(tokenToLatex).join('');
-  try {
-    katex.render(latex, renderedField, { throwOnError: false });
-  } catch {
-    renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
-  }
-}
-
   function insertChar(char) {
   const { ref, index } = resolvePath(caretPath);
 
