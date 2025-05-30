@@ -184,10 +184,9 @@ function diveIntoStructure(token, path, dir) {
 }
 
 function moveCaret(dir) {
-  let path = [...caretPath];
+  const path = [...caretPath];
   const { ref, index } = resolvePath(path);
 
-  // 1. Dive into structured token if nearby
   const diveIdx = dir > 0 ? index : index - 1;
   const diveToken = ref[diveIdx];
   const divePath = diveIntoStructure(diveToken, path.slice(0, -1).concat(diveIdx), dir);
@@ -197,7 +196,7 @@ function moveCaret(dir) {
     return;
   }
 
-  // 2. Move normally within current array
+  // Move within current array
   const newIndex = index + dir;
   if (newIndex >= 0 && newIndex <= ref.length) {
     caretPath = path.slice(0, -1).concat(newIndex);
@@ -205,13 +204,33 @@ function moveCaret(dir) {
     return;
   }
 
-  // 3. Exit current structure (if at beginning or end)
+  // Handle structure-aware climbing up and sibling logic
   for (let i = path.length - 2; i >= 0; i -= 2) {
     const parentPath = path.slice(0, i);
     const { ref: pRef, index: pIdx } = resolvePath(parentPath);
-    const fieldKey = path[i];  // e.g., 'left', 'right', etc.
+    const fieldKey = path[i];  // e.g., 'left', 'right', 'exponent', etc.
 
-    // Only climb out if at start or end of this array
+    const siblings = {
+      frac: ['left', 'right'],
+      sup: ['base', 'exponent'],
+      sub: ['base', 'sub'],
+      group: ['tokens']
+    };
+
+    const container = pRef[pIdx];
+    if (container?.type && siblings[container.type]) {
+      const fields = siblings[container.type];
+      const fieldIdx = fields.indexOf(fieldKey);
+      const targetField = fields[fieldIdx + dir];
+
+      if (targetField && Array.isArray(container[targetField])) {
+        caretPath = parentPath.concat(targetField, dir > 0 ? 0 : container[targetField].length);
+        render();
+        return;
+      }
+    }
+
+    // No sibling → move past the entire structure
     if ((dir < 0 && index === 0) || (dir > 0 && index === ref.length)) {
       caretPath = parentPath.slice(0, -1).concat(pIdx + dir);
       render();
