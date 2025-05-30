@@ -90,10 +90,22 @@
 
 function render() {
   const base = [...tokens];
+  const withCaret = renderTokensWithCaret(base, caretPath);
+  const latex = withCaret.map(tokenToLatex).join('');
 
-  if (latexBuffer !== null && latexBuffer.length > 0) {
-    base.push({ type: 'latex', value: `\\textcolor{gray}{${latexBuffer}}` });
+  try {
+    // Render KaTeX content
+    katex.render(latex, renderedField, { throwOnError: false });
+
+    // Append raw latexBuffer if it's active
+    if (latexBuffer && latexBuffer.length > 0) {
+      renderedField.innerHTML += `<span style="color:gray; font-family:monospace;">${latexBuffer}</span>`;
+    }
+
+  } catch {
+    renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
   }
+}
 
   const withCaret = renderTokensWithCaret(base, caretPath);
   const latex = withCaret.map(tokenToLatex).join('');
@@ -105,22 +117,21 @@ function render() {
   }
 }
 
-  function insertChar(char) {
+function insertChar(char) {
   const { ref, index } = resolvePath(caretPath);
 
   // Start or append to a LaTeX command
-  if (char === ' ' && latexBuffer !== null) {
-    // Finalize latexBuffer
-    ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-    caretPath[caretPath.length - 1]++;
-    latexBuffer = null;
+  if (latexBuffer !== null || char === '\\') {
+    latexBuffer = (latexBuffer || '') + char;
     render();
     return;
   }
 
-  if (latexBuffer !== null || char === '\\') {
-    // Continue building latexBuffer
-    latexBuffer = (latexBuffer || '') + char;
+  // Finalize latexBuffer on space
+  if (char === ' ' && latexBuffer !== null) {
+    ref.splice(index, 0, { type: 'latex', value: latexBuffer });
+    caretPath[caretPath.length - 1]++;
+    latexBuffer = null;
     render();
     return;
   }
