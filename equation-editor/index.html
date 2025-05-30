@@ -177,37 +177,37 @@
       return null;
     }
 
-    function moveCaret(dir) {
-      let path = [...caretPath];
-      const { ref, index } = resolvePath(path);
-      const flatIdx = dir < 0 ? index - 1 : index;
+function moveCaret(dir) {
+  let path = [...caretPath];
+  const { ref, index } = resolvePath(path);
+  const flatIdx = dir < 0 ? index - 1 : index;  // FIX: this allows diving into denominator
 
-      // Dive into structure
-      if (flatIdx >= 0 && flatIdx < ref.length) {
-        const divePath = diveIntoStructure(ref[flatIdx], path.slice(0, -1).concat(flatIdx), dir);
-        if (divePath) {
-          caretPath = divePath;
-          render(); return;
-        }
-      }
-
-      // Move within same array
-      const newIndex = index + dir;
-      if (newIndex >= 0 && newIndex <= ref.length) {
-        caretPath = path.slice(0, -1).concat(newIndex);
-        render(); return;
-      }
-
-      // Climb up
-      for (let i = path.length - 2; i >= 0; i -= 2) {
-        const parentPath = path.slice(0, i);
-        const { ref: pRef, index: pIdx } = resolvePath(parentPath);
-        if ((dir > 0 && pIdx < pRef.length) || (dir < 0 && pIdx > 0)) {
-          caretPath = parentPath.slice(0, -1).concat(pIdx + dir);
-          render(); return;
-        }
-      }
+  // Dive into structure
+  if (flatIdx >= 0 && flatIdx < ref.length) {
+    const divePath = diveIntoStructure(ref[flatIdx], path.slice(0, -1).concat(flatIdx), dir);
+    if (divePath) {
+      caretPath = divePath;
+      render(); return;
     }
+  }
+
+  // Move within same array
+  const newIndex = index + dir;
+  if (newIndex >= 0 && newIndex <= ref.length) {
+    caretPath = path.slice(0, -1).concat(newIndex);
+    render(); return;
+  }
+
+  // Climb up
+  for (let i = path.length - 2; i >= 0; i -= 2) {
+    const parentPath = path.slice(0, i);
+    const { ref: pRef, index: pIdx } = resolvePath(parentPath);
+    if ((dir > 0 && pIdx < pRef.length) || (dir < 0 && pIdx > 0)) {
+      caretPath = parentPath.slice(0, -1).concat(pIdx + dir);
+      render(); return;
+    }
+  }
+}
 
     renderedField.addEventListener('click', () => ghostInput.focus());
     ghostInput.addEventListener('input', e => {
