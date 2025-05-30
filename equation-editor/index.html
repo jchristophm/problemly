@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MiniMathEditor v2</title>
+  <title>MiniMathEditor v3</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <style>
@@ -64,18 +64,26 @@
     let tokens = [];
     let caretIndex = 0;
 
+    function tokenToLatex(token) {
+      if (token.type === 'frac') {
+        const left = token.left.map(tokenToLatex).join('') || '1';
+        const right = token.right.map(tokenToLatex).join('') || '2';
+        return `\\frac{${left}}{${right}}`;
+      } else if (token.type === 'sup') {
+        const base = token.base.map(tokenToLatex).join('') || 'x';
+        const exponent = token.exponent.map(tokenToLatex).join('') || '2';
+        return `${base}^{${exponent}}`;
+      } else {
+        return token.latex;
+      }
+    }
+
     function renderTokens() {
-      const latexWithCaret = tokens.map((tok, i) => {
-        if (i === caretIndex) return '\\textcolor{gray}{|}' + tok.latex;
-        return tok.latex;
-      }).join('');
-
-      const finalLatex = caretIndex === tokens.length
-        ? tokens.map(t => t.latex).join('') + '\\textcolor{gray}{|}'
-        : latexWithCaret;
-
+      const tokensWithCaret = [...tokens];
+      tokensWithCaret.splice(caretIndex, 0, { type: 'caret', latex: '\\textcolor{gray}{|}' });
+      const latex = tokensWithCaret.map(tokenToLatex).join('');
       try {
-        katex.render(finalLatex || '\\textcolor{gray}{Start typing...}', renderedField, {
+        katex.render(latex || '\\textcolor{gray}{Start typing...}', renderedField, {
           throwOnError: false
         });
       } catch (err) {
@@ -86,11 +94,18 @@
     function insertChar(char) {
       let token;
       if (char === '^') {
-        token = { type: 'sup', latex: '^{}' };
+        token = {
+          type: 'sup',
+          base: tokens.splice(Math.max(0, caretIndex - 1), 1),
+          exponent: []
+        };
+        caretIndex = Math.max(0, caretIndex - 1);
       } else if (char === '/') {
-        const prev = tokens[caretIndex - 1]?.latex || '';
-        if (caretIndex > 0) tokens.splice(caretIndex - 1, 1);
-        token = { type: 'frac', latex: `\\frac{${prev}}{}` };
+        token = {
+          type: 'frac',
+          left: tokens.splice(Math.max(0, caretIndex - 1), 1),
+          right: []
+        };
         caretIndex = Math.max(0, caretIndex - 1);
       } else {
         token = { type: 'char', latex: char };
@@ -141,3 +156,4 @@
   </script>
 </body>
 </html>
+
