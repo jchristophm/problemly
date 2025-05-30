@@ -65,6 +65,8 @@
     function tokenToLatex(token) {
       if (!token) return '';
       switch (token.type) {
+        case 'latex':
+          return token.value;
         case 'frac':
           return `\\frac{${(token.left || []).map(tokenToLatex).join('')}}{${(token.right || []).map(tokenToLatex).join('')}}`;
         case 'sup':
@@ -108,6 +110,21 @@
     function insertChar(char) {
       const { ref, index } = resolvePath(caretPath);
 
+      // If the current token is 'latex', append to it
+      if (ref[index - 1]?.type === 'latex') {
+        ref[index - 1].value += char;
+        render();
+        return;
+      }
+
+      // If typing a backslash, start a new latex token
+      if (char === '\\') {
+        ref.splice(index, 0, { type: 'latex', value: '\\' });
+        caretPath[caretPath.length - 1]++;
+        render();
+        return;
+      }
+      
       if (char === '^') {
         const base = ref.splice(index - 1, 1);
         const sup = { type: 'sup', base, exponent: [] };
