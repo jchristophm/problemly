@@ -38,6 +38,17 @@
       opacity: 0;
       pointer-events: none;
     }
+    .caret {
+      display: inline-block;
+      width: 1px;
+      background: black;
+      height: 1.2em;
+      vertical-align: -0.2em;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      50% { background: transparent; }
+    }
   </style>
 </head>
 <body>
@@ -51,11 +62,20 @@
     const renderedField = document.getElementById('renderedField');
     const ghostInput = document.getElementById('ghostInput');
     let tokens = [];
+    let caretIndex = 0;
 
     function renderTokens() {
-      const latex = tokens.map(tok => tok.latex).join(' ');
+      const latexWithCaret = tokens.map((tok, i) => {
+        if (i === caretIndex) return '\\textcolor{gray}{|}' + tok.latex;
+        return tok.latex;
+      }).join('');
+
+      const finalLatex = caretIndex === tokens.length
+        ? tokens.map(t => t.latex).join('') + '\\textcolor{gray}{|}'
+        : latexWithCaret;
+
       try {
-        katex.render(latex || '\textcolor{gray}{Start typing...}', renderedField, {
+        katex.render(finalLatex || '\\textcolor{gray}{Start typing...}', renderedField, {
           throwOnError: false
         });
       } catch (err) {
@@ -64,19 +84,34 @@
     }
 
     function insertChar(char) {
+      let token;
       if (char === '^') {
-        tokens.push({ type: 'sup', latex: '^{}' });
+        token = { type: 'sup', latex: '^{}' };
       } else if (char === '/') {
-        // basic 1/2 support, can expand later
-        const last = tokens.pop();
-        if (last) {
-          tokens.push({ type: 'frac', latex: `\\frac{${last.latex}}{}` });
-        } else {
-          tokens.push({ type: 'frac', latex: '\\frac{}{ }' });
-        }
+        const prev = tokens[caretIndex - 1]?.latex || '';
+        if (caretIndex > 0) tokens.splice(caretIndex - 1, 1);
+        token = { type: 'frac', latex: `\\frac{${prev}}{}` };
+        caretIndex = Math.max(0, caretIndex - 1);
       } else {
-        tokens.push({ type: 'char', latex: char });
+        token = { type: 'char', latex: char };
       }
+      tokens.splice(caretIndex, 0, token);
+      caretIndex++;
+      renderTokens();
+    }
+
+    function deleteChar() {
+      if (caretIndex > 0) {
+        tokens.splice(caretIndex - 1, 1);
+        caretIndex--;
+        renderTokens();
+      }
+    }
+
+    function moveCaret(dir) {
+      caretIndex += dir;
+      if (caretIndex < 0) caretIndex = 0;
+      if (caretIndex > tokens.length) caretIndex = tokens.length;
       renderTokens();
     }
 
@@ -88,12 +123,21 @@
       if (val) insertChar(val);
     });
 
-    // Enable typing
-    renderedField.addEventListener('focus', () => ghostInput.focus());
+    ghostInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        deleteChar();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        moveCaret(-1);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        moveCaret(1);
+      }
+    });
 
-    // Initial render
+    renderedField.addEventListener('focus', () => ghostInput.focus());
     renderTokens();
   </script>
 </body>
 </html>
-
