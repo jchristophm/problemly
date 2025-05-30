@@ -187,7 +187,7 @@ function moveCaret(dir) {
   let path = [...caretPath];
   const { ref, index } = resolvePath(path);
 
-  // Prioritize diving into nearby structured token (both directions)
+  // 1. Dive into structured token if nearby
   const diveIdx = dir > 0 ? index : index - 1;
   const diveToken = ref[diveIdx];
   const divePath = diveIntoStructure(diveToken, path.slice(0, -1).concat(diveIdx), dir);
@@ -197,7 +197,7 @@ function moveCaret(dir) {
     return;
   }
 
-  // Move within current array
+  // 2. Move normally within current array
   const newIndex = index + dir;
   if (newIndex >= 0 && newIndex <= ref.length) {
     caretPath = path.slice(0, -1).concat(newIndex);
@@ -205,11 +205,14 @@ function moveCaret(dir) {
     return;
   }
 
-  // Move up one layer and across
+  // 3. Exit current structure (if at beginning or end)
   for (let i = path.length - 2; i >= 0; i -= 2) {
     const parentPath = path.slice(0, i);
     const { ref: pRef, index: pIdx } = resolvePath(parentPath);
-    if ((dir > 0 && pIdx < pRef.length) || (dir < 0 && pIdx > 0)) {
+    const fieldKey = path[i];  // e.g., 'left', 'right', etc.
+
+    // Only climb out if at start or end of this array
+    if ((dir < 0 && index === 0) || (dir > 0 && index === ref.length)) {
       caretPath = parentPath.slice(0, -1).concat(pIdx + dir);
       render();
       return;
