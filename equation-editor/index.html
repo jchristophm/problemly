@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Equation Editor</title>
-  <link rel="stylesheet" href="https://unpkg.com/mathlive/dist/mathlive.core.css" />
-  <script src="https://unpkg.com/mathlive/dist/mathlive.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Mathfield Equation Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/mathlive"></script>
   <style>
-    /* Reset and structure */
     html, body {
       margin: 0;
       padding: 0;
@@ -16,9 +15,7 @@
       font-family: sans-serif;
     }
 
-    /* Fixed toolbars */
-    #toolbar-top,
-    #toolbar-bottom {
+    #toolbar-top, #toolbar-bottom {
       position: fixed;
       left: 0;
       right: 0;
@@ -41,11 +38,10 @@
       bottom: 0;
     }
 
-    /* Canvas container fills in between */
     #main-canvas {
       position: absolute;
-      top: 50px;        /* matches toolbar height */
-      bottom: 50px;     /* matches toolbar height */
+      top: 50px;
+      bottom: 50px;
       left: 0;
       right: 0;
       overflow: auto;
@@ -55,7 +51,6 @@
       justify-content: center;
     }
 
-    /* Buttons */
     [id^="toolbar"] button {
       background: #f5f5f5;
       border: 1px solid #ccc;
@@ -75,83 +70,64 @@
       background: #e0e0e0;
     }
 
-    .icon {
-      width: 30px;
-      height: 30px;
-      stroke: currentColor;
-      fill: none;
-      display: block;
-    }
-
     #container {
       border: 2px solid #888;
       width: 90%;
       height: 90%;
       box-sizing: border-box;
+      touch-action: none;
       background: white;
-      padding: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     math-field {
       width: 100%;
-      font-size: 24px;
-      height: 100%;
-      box-sizing: border-box;
+      font-size: 1.5em;
     }
   </style>
 </head>
 <body>
   <div id="toolbar-top">
-    <button data-latex="\\theta">θ</button>
-    <button data-latex="\\pi">π</button>
-    <button data-latex="\\mu">μ</button>
-    <button data-latex="\\rho">ρ</button>
-    <button data-latex="\\Delta">Δ</button>
-    <button data-latex="\\sqrt{}">√</button>
-    <button data-latex="x^2">x²</button>
-    <button data-latex="\\frac{}{}">a/b</button>
-    <button data-latex="\\sum">∑</button>
-    <button data-latex="\\int">∫</button>
-    <button data-latex="\\vec{}">𝐅⃗</button>
-    <button data-latex="\\rightarrow">→</button>
+    <button onclick="insertSymbol('\\theta')">θ</button>
+    <button onclick="insertSymbol('\\pi')">π</button>
+    <button onclick="insertSymbol('\\mu')">μ</button>
+    <button onclick="insertSymbol('\\rho')">ρ</button>
+    <button onclick="insertSymbol('\\Delta')">Δ</button>
+    <button onclick="insertSymbol('\\sqrt{}')">√</button>
+    <button onclick="insertSymbol('x^2')">x²</button>
+    <button onclick="insertSymbol('\\frac{}{}')">a/b</button>
+    <button onclick="insertSymbol('\\sum')">∑</button>
+    <button onclick="insertSymbol('\\int')">∫</button>
+    <button onclick="insertSymbol('\\vec{}')">𝐅⃗</button>
+    <button onclick="insertSymbol('\\rightarrow')">→</button>
   </div>
 
   <div id="main-canvas">
     <div id="container">
-      <math-field id="mathEditor" virtual-keyboard-mode="onfocus"></math-field>
+      <math-field id="mathfield"></math-field>
     </div>
   </div>
 
   <div id="toolbar-bottom">
-    <button onclick="submitEquation()">✔</button>
-    <button onclick="cancelEquation()">✖</button>
+    <button onclick="insertEquation()">Insert</button>
   </div>
 
-<script>
-customElements.whenDefined('math-field').then(() => {
-  const editor = document.getElementById('mathEditor');
+  <script>
+    const editor = document.getElementById('mathfield');
 
-  // Toolbar buttons
-  document.querySelectorAll('#toolbar-top button').forEach(button => {
-    button.addEventListener('click', () => {
-      const latex = button.getAttribute('data-latex');
-      if (latex && typeof editor.insert === 'function') {
-        editor.insert(latex);
-        editor.focus();
-      }
-    });
-  });
+    function insertSymbol(latex) {
+      editor.executeCommand('insert', latex);
+    }
 
-  // Submit and Cancel
-  window.submitEquation = function () {
-    const latex = editor.getValue?.('latex') ?? '';
-    window.parent.postMessage({ type: 'mathlive-submit', latex }, '*');
-  };
-
-  window.cancelEquation = function () {
-    window.parent.postMessage({ type: 'mathlive-cancel' }, '*');
-  };
-});
-</script>
+    function insertEquation() {
+      const latex = editor.value;
+      // Use postMessage to communicate with parent Bubble app
+      parent.postMessage({ type: 'insertEquation', latex }, '*');
+    }
+  </script>
 </body>
 </html>
+
