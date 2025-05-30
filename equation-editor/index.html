@@ -53,47 +53,37 @@
 
     let tokens = [];
     let caretPath = [0];
+    let latexBuffer = ''; // NEW
 
     function resolvePath(path) {
       let ref = tokens;
-      for (let i = 0; i < path.length - 1; i++) {
-        ref = ref[path[i]];
-      }
+      for (let i = 0; i < path.length - 1; i++) ref = ref[path[i]];
       return { ref, index: path[path.length - 1] };
     }
 
-function tokenToLatex(token) {
-  if (!token) return '';
-  switch (token.type) {
-    case 'latex':
-      try {
-        katex.__parse(token.value); // test parsing
-        return token.value;
-      } catch {
-        return `\\textcolor{red}{${token.value}}`;
+    function tokenToLatex(token) {
+      if (!token) return '';
+      switch (token.type) {
+        case 'latex':
+          try {
+            katex.__parse(token.value);
+            return token.value;
+          } catch {
+            return `\\textcolor{red}{${token.value}}`;
+          }
+        case 'frac': return `\\frac{${(token.left || []).map(tokenToLatex).join('')}}{${(token.right || []).map(tokenToLatex).join('')}}`;
+        case 'sup': return `${(token.base || []).map(tokenToLatex).join('')}^{${(token.exponent || []).map(tokenToLatex).join('')}}`;
+        case 'sub': return `${(token.base || []).map(tokenToLatex).join('')}_{${(token.sub || []).map(tokenToLatex).join('')}}`;
+        case 'group': return `\\left(${(token.tokens || []).map(tokenToLatex).join('')}\\right)`;
+        case 'caret': return '\\textcolor{gray}{|}';
+        case 'char': default: return token.latex || '';
       }
-    case 'frac':
-      return `\\frac{${(token.left || []).map(tokenToLatex).join('')}}{${(token.right || []).map(tokenToLatex).join('')}}`;
-    case 'sup':
-      return `${(token.base || []).map(tokenToLatex).join('')}^{${(token.exponent || []).map(tokenToLatex).join('')}}`;
-    case 'sub':
-      return `${(token.base || []).map(tokenToLatex).join('')}_{${(token.sub || []).map(tokenToLatex).join('')}}`;
-    case 'group':
-      return `\\left(${(token.tokens || []).map(tokenToLatex).join('')}\\right)`;
-    case 'caret':
-      return '\\textcolor{gray}{|}';
-    case 'char':
-    default:
-      return token.latex || '';
-  }
-}
+    }
 
     function renderTokensWithCaret(tokens, path) {
       const deepCopy = JSON.parse(JSON.stringify(tokens));
       let ref = deepCopy;
-      for (let i = 0; i < path.length - 1; i++) {
-        ref = ref[path[i]];
-      }
+      for (let i = 0; i < path.length - 1; i++) ref = ref[path[i]];
       ref.splice(path[path.length - 1], 0, { type: 'caret' });
       return deepCopy;
     }
@@ -112,174 +102,155 @@ function tokenToLatex(token) {
       }
     }
 
-function insertChar(char) {
-  const { ref, index } = resolvePath(caretPath);
+    function insertChar(char) {
+      const { ref, index } = resolvePath(caretPath);
 
-  // Start a new LaTeX command if user types \
-  if (char === '\\') {
-    ref.splice(index, 0, { type: 'latex', value: '\\' });
-    caretPath[caretPath.length - 1]++;
-    render(); return;
-  }
-
-  // Append to an active LaTeX command token
-  if (ref[index - 1]?.type === 'latex') {
-    ref[index - 1].value += char;
-    render(); return;
-  }
-
-  // Insert normal structured characters
-  if (char === '^') {
-    const base = ref.splice(index - 1, 1);
-    const sup = { type: 'sup', base, exponent: [] };
-    ref.splice(index - 1, 0, sup);
-    caretPath = caretPath.slice(0, -1).concat(index - 1, 'exponent', 0);
-    render(); return;
-  }
-
-  if (char === '_') {
-    const base = ref.splice(index - 1, 1);
-    const sub = { type: 'sub', base, sub: [] };
-    ref.splice(index - 1, 0, sub);
-    caretPath = caretPath.slice(0, -1).concat(index - 1, 'sub', 0);
-    render(); return;
-  }
-
-  if (char === '/') {
-    const left = ref.splice(index - 1, 1);
-    const frac = { type: 'frac', left, right: [] };
-    ref.splice(index - 1, 0, frac);
-    caretPath = caretPath.slice(0, -1).concat(index - 1, 'right', 0);
-    render(); return;
-  }
-
-  if (char === '(') {
-    const group = { type: 'group', tokens: [] };
-    ref.splice(index, 0, group);
-    caretPath = caretPath.slice(0, -1).concat(index, 'tokens', 0);
-    render(); return;
-  }
-
-  if (char === ')') {
-    const groupIndex = caretPath.lastIndexOf('tokens');
-    if (groupIndex !== -1) {
-      caretPath = caretPath.slice(0, groupIndex).concat(caretPath[groupIndex - 1] + 1);
-      render(); return;
-    }
-  }
-
-  ref.splice(index, 0, { type: 'char', latex: char });
-  caretPath[caretPath.length - 1]++;
-  render();
-}
-
-function deleteChar() {
-  const { ref, index } = resolvePath(caretPath);
-
-  // If inside a latex token, trim it
-  if (ref[index - 1]?.type === 'latex') {
-    ref[index - 1].value = ref[index - 1].value.slice(0, -1);
-    if (ref[index - 1].value.length === 0) {
-      ref.splice(index - 1, 1);
-      caretPath[caretPath.length - 1]--;
-    }
-    render();
-    return;
-  }
-
-  if (index > 0) {
-    ref.splice(index - 1, 1);
-    caretPath[caretPath.length - 1]--;
-    render();
-  }
-}
-
-function diveIntoStructure(token, path, dir) {
-  if (!token) return null;
-
-  const fields = {
-    frac: dir < 0 ? ['right', 'left'] : ['left', 'right'],
-    sup: ['exponent'],
-    sub: ['sub'],
-    group: ['tokens']
-  };
-
-  const keys = fields[token.type];
-  if (keys) {
-    for (const key of keys) {
-      if (Array.isArray(token[key])) {
-        const target = token[key];
-        return path.concat(key, dir < 0 ? target.length : 0);
+      // LaTeX command buffer
+      if (latexBuffer || char === '\\') {
+        if (char === '\\' && latexBuffer) {
+          latexBuffer = '';
+        }
+        latexBuffer += char;
+        render(); return;
       }
-    }
-  }
-  return null;
-}
 
-function moveCaret(dir) {
-  const path = [...caretPath];
-  const { ref, index } = resolvePath(path);
-
-  const diveIdx = dir > 0 ? index : index - 1;
-  const diveToken = ref[diveIdx];
-  const divePath = diveIntoStructure(diveToken, path.slice(0, -1).concat(diveIdx), dir);
-  if (divePath) {
-    caretPath = divePath;
-    render();
-    return;
-  }
-
-  // Move within current array
-  const newIndex = index + dir;
-  if (newIndex >= 0 && newIndex <= ref.length) {
-    caretPath = path.slice(0, -1).concat(newIndex);
-    render();
-    return;
-  }
-
-  // Handle structure-aware climbing up and sibling logic
-  for (let i = path.length - 2; i >= 0; i -= 2) {
-    const parentPath = path.slice(0, i);
-    const { ref: pRef, index: pIdx } = resolvePath(parentPath);
-    const fieldKey = path[i];  // e.g., 'left', 'right', 'exponent', etc.
-
-    const siblings = {
-      frac: ['left', 'right'],
-      sup: ['base', 'exponent'],
-      sub: ['base', 'sub'],
-      group: ['tokens']
-    };
-
-    const container = pRef[pIdx];
-    if (container?.type && siblings[container.type]) {
-      const fields = siblings[container.type];
-      const fieldIdx = fields.indexOf(fieldKey);
-      const targetField = fields[fieldIdx + dir];
-
-      if (targetField && Array.isArray(container[targetField])) {
-        caretPath = parentPath.concat(targetField, dir > 0 ? 0 : container[targetField].length);
-        render();
-        return;
+      if (char === '^') {
+        const base = ref.splice(index - 1, 1);
+        ref.splice(index - 1, 0, { type: 'sup', base, exponent: [] });
+        caretPath = caretPath.slice(0, -1).concat(index - 1, 'exponent', 0);
+        render(); return;
       }
-    }
 
-    // No sibling → move past the entire structure
-    if ((dir < 0 && index === 0) || (dir > 0 && index === ref.length)) {
-      caretPath = parentPath.slice(0, -1).concat(dir > 0 ? pIdx + 1 : pIdx);
+      if (char === '_') {
+        const base = ref.splice(index - 1, 1);
+        ref.splice(index - 1, 0, { type: 'sub', base, sub: [] });
+        caretPath = caretPath.slice(0, -1).concat(index - 1, 'sub', 0);
+        render(); return;
+      }
+
+      if (char === '/') {
+        const left = ref.splice(index - 1, 1);
+        ref.splice(index - 1, 0, { type: 'frac', left, right: [] });
+        caretPath = caretPath.slice(0, -1).concat(index - 1, 'right', 0);
+        render(); return;
+      }
+
+      if (char === '(') {
+        ref.splice(index, 0, { type: 'group', tokens: [] });
+        caretPath = caretPath.slice(0, -1).concat(index, 'tokens', 0);
+        render(); return;
+      }
+
+      if (char === ')') {
+        const groupIndex = caretPath.lastIndexOf('tokens');
+        if (groupIndex !== -1) {
+          caretPath = caretPath.slice(0, groupIndex).concat(caretPath[groupIndex - 1] + 1);
+          render(); return;
+        }
+      }
+
+      ref.splice(index, 0, { type: 'char', latex: char });
+      caretPath[caretPath.length - 1]++;
       render();
-      return;
     }
-  }
-}
+
+    function deleteChar() {
+      const { ref, index } = resolvePath(caretPath);
+      if (latexBuffer) {
+        latexBuffer = latexBuffer.slice(0, -1);
+        render(); return;
+      }
+      if (index > 0) {
+        ref.splice(index - 1, 1);
+        caretPath[caretPath.length - 1]--;
+        render();
+      }
+    }
+
+    function commitLatexBuffer() {
+      if (!latexBuffer) return;
+      const { ref, index } = resolvePath(caretPath);
+      ref.splice(index, 0, { type: 'latex', value: latexBuffer });
+      caretPath[caretPath.length - 1]++;
+      latexBuffer = '';
+    }
+
+    function diveIntoStructure(token, path, dir) {
+      if (!token) return null;
+      const fields = {
+        frac: dir < 0 ? ['right', 'left'] : ['left', 'right'],
+        sup: ['exponent'],
+        sub: ['sub'],
+        group: ['tokens']
+      };
+      const keys = fields[token.type];
+      if (keys) {
+        for (const key of keys) {
+          if (Array.isArray(token[key])) {
+            const target = token[key];
+            return path.concat(key, dir < 0 ? target.length : 0);
+          }
+        }
+      }
+      return null;
+    }
+
+    function moveCaret(dir) {
+      const path = [...caretPath];
+      const { ref, index } = resolvePath(path);
+
+      const diveIdx = dir > 0 ? index : index - 1;
+      const diveToken = ref[diveIdx];
+      const divePath = diveIntoStructure(diveToken, path.slice(0, -1).concat(diveIdx), dir);
+      if (divePath) {
+        caretPath = divePath;
+        render(); return;
+      }
+
+      const newIndex = index + dir;
+      if (newIndex >= 0 && newIndex <= ref.length) {
+        caretPath = path.slice(0, -1).concat(newIndex);
+        render(); return;
+      }
+
+      for (let i = path.length - 2; i >= 0; i -= 2) {
+        const parentPath = path.slice(0, i);
+        const { ref: pRef, index: pIdx } = resolvePath(parentPath);
+        const fieldKey = path[i];
+
+        const siblings = {
+          frac: ['left', 'right'],
+          sup: ['base', 'exponent'],
+          sub: ['base', 'sub'],
+          group: ['tokens']
+        };
+
+        const container = pRef[pIdx];
+        if (container?.type && siblings[container.type]) {
+          const fields = siblings[container.type];
+          const fieldIdx = fields.indexOf(fieldKey);
+          const targetField = fields[fieldIdx + dir];
+          if (targetField && Array.isArray(container[targetField])) {
+            caretPath = parentPath.concat(targetField, dir > 0 ? 0 : container[targetField].length);
+            render(); return;
+          }
+        }
+
+        if ((dir < 0 && index === 0) || (dir > 0 && index === ref.length)) {
+          caretPath = parentPath.slice(0, -1).concat(dir > 0 ? pIdx + 1 : pIdx);
+          render(); return;
+        }
+      }
+    }
 
     renderedField.addEventListener('click', () => ghostInput.focus());
 
     ghostInput.addEventListener('input', e => {
       const val = ghostInput.value;
       ghostInput.value = '';
-
       if (val === ' ') {
-        moveCaret(1); // spacebar on mobile = move right
+        if (latexBuffer) commitLatexBuffer();
+        else moveCaret(1);
       } else if (val) {
         insertChar(val);
       }
@@ -291,13 +262,17 @@ function moveCaret(dir) {
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault(); moveCaret(-1);
       } else if (e.key === 'ArrowRight' || e.key === ' ') {
-        e.preventDefault(); moveCaret(1);
+        e.preventDefault();
+        if (latexBuffer) commitLatexBuffer();
+        else moveCaret(1);
       }
     });
+
     renderedField.addEventListener('focus', () => ghostInput.focus());
 
     render();
   </script>
 </body>
 </html>
+
 
