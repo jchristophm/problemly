@@ -51,9 +51,9 @@
     const renderedField = document.getElementById('renderedField');
     const ghostInput = document.getElementById('ghostInput');
 
-    let latexBuffer = null;
     let tokens = [];
     let caretPath = [0];
+    let latexBuffer = null;
 
     function resolvePath(path) {
       let ref = tokens;
@@ -88,116 +88,104 @@
       return deepCopy;
     }
 
-function render() {
-  const base = [...tokens];
-  const withCaret = renderTokensWithCaret(base, caretPath);
-  const latex = withCaret.map(tokenToLatex).join('');
+    function render() {
+      const base = [...tokens];
+      const withCaret = renderTokensWithCaret(base, caretPath);
+      const latex = withCaret.map(tokenToLatex).join('');
 
-  try {
-    // Render KaTeX content
-    katex.render(latex, renderedField, { throwOnError: false });
+      try {
+        katex.render(latex, renderedField, { throwOnError: false });
 
-    // Append raw latexBuffer if it's active
-    if (latexBuffer && latexBuffer.length > 0) {
-      renderedField.innerHTML += `<span style="color:gray; font-family:monospace;">${latexBuffer}</span>`;
+        // Append raw latexBuffer if it's active
+        if (latexBuffer && latexBuffer.length > 0) {
+          renderedField.innerHTML += `<span style="color:gray; font-family:monospace;">${latexBuffer}</span>`;
+        }
+
+      } catch {
+        renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
+      }
     }
 
-  } catch {
-    renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
-  }
-}
+    function insertChar(char) {
+      const { ref, index } = resolvePath(caretPath);
 
-  const withCaret = renderTokensWithCaret(base, caretPath);
-  const latex = withCaret.map(tokenToLatex).join('');
+      // Finalize latex buffer on space
+      if (char === ' ' && latexBuffer !== null) {
+        ref.splice(index, 0, { type: 'latex', value: latexBuffer });
+        caretPath[caretPath.length - 1]++;
+        latexBuffer = null;
+        render();
+        return;
+      }
 
-  try {
-    katex.render(latex, renderedField, { throwOnError: false });
-  } catch {
-    renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
-  }
-}
+      // Build LaTeX buffer if typing command
+      if (latexBuffer !== null || char === '\\') {
+        latexBuffer = (latexBuffer || '') + char;
+        render();
+        return;
+      }
 
-function insertChar(char) {
-  const { ref, index } = resolvePath(caretPath);
+      // Structured symbols
+      if (char === '^') {
+        const base = ref.splice(index - 1, 1);
+        const sup = { type: 'sup', base, exponent: [] };
+        ref.splice(index - 1, 0, sup);
+        caretPath = caretPath.slice(0, -1).concat(index - 1, 'exponent', 0);
+        render(); return;
+      }
 
-  // Start or append to a LaTeX command
-  if (latexBuffer !== null || char === '\\') {
-    latexBuffer = (latexBuffer || '') + char;
-    render();
-    return;
-  }
+      if (char === '_') {
+        const base = ref.splice(index - 1, 1);
+        const sub = { type: 'sub', base, sub: [] };
+        ref.splice(index - 1, 0, sub);
+        caretPath = caretPath.slice(0, -1).concat(index - 1, 'sub', 0);
+        render(); return;
+      }
 
-  // Finalize latexBuffer on space
-  if (char === ' ' && latexBuffer !== null) {
-    ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-    caretPath[caretPath.length - 1]++;
-    latexBuffer = null;
-    render();
-    return;
-  }
+      if (char === '/') {
+        const left = ref.splice(index - 1, 1);
+        const frac = { type: 'frac', left, right: [] };
+        ref.splice(index - 1, 0, frac);
+        caretPath = caretPath.slice(0, -1).concat(index - 1, 'right', 0);
+        render(); return;
+      }
 
-  // Handle structure chars
-  if (char === '^') {
-    const base = ref.splice(index - 1, 1);
-    const sup = { type: 'sup', base, exponent: [] };
-    ref.splice(index - 1, 0, sup);
-    caretPath = caretPath.slice(0, -1).concat(index - 1, 'exponent', 0);
-    render(); return;
-  }
+      if (char === '(') {
+        const group = { type: 'group', tokens: [] };
+        ref.splice(index, 0, group);
+        caretPath = caretPath.slice(0, -1).concat(index, 'tokens', 0);
+        render(); return;
+      }
 
-  if (char === '_') {
-    const base = ref.splice(index - 1, 1);
-    const sub = { type: 'sub', base, sub: [] };
-    ref.splice(index - 1, 0, sub);
-    caretPath = caretPath.slice(0, -1).concat(index - 1, 'sub', 0);
-    render(); return;
-  }
+      if (char === ')') {
+        const groupIndex = caretPath.lastIndexOf('tokens');
+        if (groupIndex !== -1) {
+          caretPath = caretPath.slice(0, groupIndex).concat(caretPath[groupIndex - 1] + 1);
+          render(); return;
+        }
+      }
 
-  if (char === '/') {
-    const left = ref.splice(index - 1, 1);
-    const frac = { type: 'frac', left, right: [] };
-    ref.splice(index - 1, 0, frac);
-    caretPath = caretPath.slice(0, -1).concat(index - 1, 'right', 0);
-    render(); return;
-  }
-
-  if (char === '(') {
-    const group = { type: 'group', tokens: [] };
-    ref.splice(index, 0, group);
-    caretPath = caretPath.slice(0, -1).concat(index, 'tokens', 0);
-    render(); return;
-  }
-
-  if (char === ')') {
-    const groupIndex = caretPath.lastIndexOf('tokens');
-    if (groupIndex !== -1) {
-      caretPath = caretPath.slice(0, groupIndex).concat(caretPath[groupIndex - 1] + 1);
-      render(); return;
+      ref.splice(index, 0, { type: 'char', latex: char });
+      caretPath[caretPath.length - 1]++;
+      render();
     }
-  }
 
-  // Default character
-  ref.splice(index, 0, { type: 'char', latex: char });
-  caretPath[caretPath.length - 1]++;
-  render();
-}
+    function deleteChar() {
+      const { ref, index } = resolvePath(caretPath);
 
-function deleteChar() {
-  const { ref, index } = resolvePath(caretPath);
+      if (latexBuffer !== null) {
+        latexBuffer = latexBuffer.slice(0, -1);
+        if (latexBuffer.length === 0) latexBuffer = null;
+        render();
+        return;
+      }
 
-  if (latexBuffer !== null) {
-    latexBuffer = latexBuffer.slice(0, -1);
-    if (latexBuffer.length === 0) latexBuffer = null;
-    render();
-    return;
-  }
-
-  if (index > 0) {
-    ref.splice(index - 1, 1);
-    caretPath[caretPath.length - 1]--;
-    render();
-  }
-}
+      if (index > 0) {
+        ref.splice(index - 1, 1);
+        caretPath[caretPath.length - 1]--;
+        render();
+      }
+    }
 
     function commitLatexBuffer() {
       if (!latexBuffer) return;
@@ -280,13 +268,14 @@ function deleteChar() {
     ghostInput.addEventListener('input', e => {
       const val = ghostInput.value;
       ghostInput.value = '';
+
       if (val === ' ') {
         if (latexBuffer) {
           commitLatexBuffer();
-          render();  // <- force immediate visual update
-          return;    // <- optional, but prevents accidental fallback
+          render();
+        } else {
+          moveCaret(1);
         }
-        else moveCaret(1);
       } else if (val) {
         insertChar(val);
       }
@@ -299,16 +288,17 @@ function deleteChar() {
         e.preventDefault(); moveCaret(-1);
       } else if (e.key === 'ArrowRight' || e.key === ' ') {
         e.preventDefault();
-        if (latexBuffer) commitLatexBuffer();
-        else moveCaret(1);
+        if (latexBuffer) {
+          commitLatexBuffer();
+          render();
+        } else {
+          moveCaret(1);
+        }
       }
     });
 
     renderedField.addEventListener('focus', () => ghostInput.focus());
-
     render();
   </script>
 </body>
 </html>
-
-
