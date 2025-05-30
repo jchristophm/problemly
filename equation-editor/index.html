@@ -169,14 +169,26 @@
       render();
     }
 
-    function deleteChar() {
-      const { ref, index } = resolvePath(caretPath);
-      if (index > 0) {
-        ref.splice(index - 1, 1);
-        caretPath[caretPath.length - 1]--;
-        render();
-      }
+function deleteChar() {
+  const { ref, index } = resolvePath(caretPath);
+
+  // If inside a latex token, trim it
+  if (ref[index - 1]?.type === 'latex') {
+    ref[index - 1].value = ref[index - 1].value.slice(0, -1);
+    if (ref[index - 1].value.length === 0) {
+      ref.splice(index - 1, 1);
+      caretPath[caretPath.length - 1]--;
     }
+    render();
+    return;
+  }
+
+  if (index > 0) {
+    ref.splice(index - 1, 1);
+    caretPath[caretPath.length - 1]--;
+    render();
+  }
+}
 
 function diveIntoStructure(token, path, dir) {
   if (!token) return null;
