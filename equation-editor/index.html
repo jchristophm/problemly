@@ -240,11 +240,18 @@ function moveCaret(dir) {
 }
 
     renderedField.addEventListener('click', () => ghostInput.focus());
+
     ghostInput.addEventListener('input', e => {
       const val = ghostInput.value;
       ghostInput.value = '';
-      if (val) insertChar(val);
+
+      if (val === ' ') {
+        moveCaret(1); // spacebar on mobile = move right
+      } else if (val) {
+        insertChar(val);
+      }
     });
+
     ghostInput.addEventListener('keydown', e => {
       if (e.key === 'Backspace') {
         e.preventDefault(); deleteChar();
