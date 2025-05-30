@@ -88,19 +88,20 @@
       return deepCopy;
     }
 
-    function render() {
-      if (tokens.length === 0) {
-        katex.render('\\textcolor{gray}{Start typing...}', renderedField, { throwOnError: false });
-        return;
-      }
-      const withCaret = renderTokensWithCaret(tokens, caretPath);
-      const latex = withCaret.map(tokenToLatex).join('');
-      try {
-        katex.render(latex, renderedField, { throwOnError: false });
-      } catch {
-        renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
-      }
-    }
+function render() {
+  const base = [...tokens];
+  if (window.latexBuffer) {
+    base.push({ type: 'latex', value: `\\textcolor{gray}{${latexBuffer}}` });
+  }
+
+  const withCaret = renderTokensWithCaret(base, caretPath);
+  const latex = withCaret.map(tokenToLatex).join('');
+  try {
+    katex.render(latex, renderedField, { throwOnError: false });
+  } catch {
+    renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
+  }
+}
 
     function insertChar(char) {
       const { ref, index } = resolvePath(caretPath);
