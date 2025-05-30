@@ -128,36 +128,30 @@
   </div>
 
 <script>
-  window.addEventListener('DOMContentLoaded', () => {
-    const field = document.getElementById('mathEditor');
+customElements.whenDefined('math-field').then(() => {
+  const editor = document.getElementById('mathEditor');
 
-    // Wait until MathLive hydrates the component
-    field.addEventListener('mount', () => {
-      // Now safe to use .insert(), .getValue(), etc.
-
-      // Symbol buttons
-      document.querySelectorAll('#toolbar-top button').forEach(button => {
-        button.addEventListener('click', () => {
-          const latex = button.getAttribute('data-latex');
-          if (latex && field.insert) {
-            field.insert(latex);
-            field.focus();
-          }
-        });
-      });
-
-      // Submit
-      window.submitEquation = function () {
-        const latex = field.getValue('latex');
-        window.parent.postMessage({ type: 'mathlive-submit', latex }, '*');
-      };
-
-      // Cancel
-      window.cancelEquation = function () {
-        window.parent.postMessage({ type: 'mathlive-cancel' }, '*');
-      };
+  // Toolbar buttons
+  document.querySelectorAll('#toolbar-top button').forEach(button => {
+    button.addEventListener('click', () => {
+      const latex = button.getAttribute('data-latex');
+      if (latex && typeof editor.insert === 'function') {
+        editor.insert(latex);
+        editor.focus();
+      }
     });
   });
+
+  // Submit and Cancel
+  window.submitEquation = function () {
+    const latex = editor.getValue?.('latex') ?? '';
+    window.parent.postMessage({ type: 'mathlive-submit', latex }, '*');
+  };
+
+  window.cancelEquation = function () {
+    window.parent.postMessage({ type: 'mathlive-cancel' }, '*');
+  };
+});
 </script>
 </body>
 </html>
