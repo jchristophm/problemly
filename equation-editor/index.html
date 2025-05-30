@@ -232,7 +232,7 @@ function moveCaret(dir) {
 
     // No sibling → move past the entire structure
     if ((dir < 0 && index === 0) || (dir > 0 && index === ref.length)) {
-      caretPath = parentPath.slice(0, -1).concat(pIdx + dir);
+      caretPath = parentPath.slice(0, -1).concat(dir > 0 ? pIdx + 1 : pIdx);
       render();
       return;
     }
