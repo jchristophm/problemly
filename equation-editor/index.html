@@ -270,7 +270,11 @@ function deleteChar() {
       const val = ghostInput.value;
       ghostInput.value = '';
       if (val === ' ') {
-        if (latexBuffer) commitLatexBuffer();
+        if (latexBuffer) {
+          commitLatexBuffer();
+          render();  // <- force immediate visual update
+          return;    // <- optional, but prevents accidental fallback
+        }
         else moveCaret(1);
       } else if (val) {
         insertChar(val);
