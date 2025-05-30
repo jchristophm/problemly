@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MiniMathEditor v3</title>
+  <title>MiniMathEditor v4</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <style>
@@ -66,26 +66,36 @@
 
     function tokenToLatex(token) {
       if (token.type === 'frac') {
-        const left = token.left.map(tokenToLatex).join('') || '1';
-        const right = token.right.map(tokenToLatex).join('') || '2';
+        const left = token.left.map(tokenToLatex).join('') || '{}';
+        const right = token.right.map(tokenToLatex).join('') || '{}';
         return `\\frac{${left}}{${right}}`;
       } else if (token.type === 'sup') {
-        const base = token.base.map(tokenToLatex).join('') || 'x';
-        const exponent = token.exponent.map(tokenToLatex).join('') || '2';
+        const base = token.base.map(tokenToLatex).join('') || '{}';
+        const exponent = token.exponent.map(tokenToLatex).join('') || '{}';
         return `${base}^{${exponent}}`;
+      } else if (token.type === 'sub') {
+        const base = token.base.map(tokenToLatex).join('') || '{}';
+        const sub = token.sub.map(tokenToLatex).join('') || '{}';
+        return `${base}_{${sub}}`;
+      } else if (token.type === 'caret') {
+        return '\\textcolor{gray}{|}';
       } else {
         return token.latex;
       }
     }
 
     function renderTokens() {
+      if (tokens.length === 0) {
+        katex.render('\\textcolor{gray}{Start typing...}', renderedField, { throwOnError: false });
+        return;
+      }
+
       const tokensWithCaret = [...tokens];
-      tokensWithCaret.splice(caretIndex, 0, { type: 'caret', latex: '\\textcolor{gray}{|}' });
-      const latex = tokensWithCaret.map(tokenToLatex).join('');
+      tokensWithCaret.splice(caretIndex, 0, { type: 'caret' });
+
       try {
-        katex.render(latex || '\\textcolor{gray}{Start typing...}', renderedField, {
-          throwOnError: false
-        });
+        const latex = tokensWithCaret.map(tokenToLatex).join('');
+        katex.render(latex, renderedField, { throwOnError: false });
       } catch (err) {
         renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
       }
@@ -93,23 +103,45 @@
 
     function insertChar(char) {
       let token;
+
       if (char === '^') {
-        token = {
-          type: 'sup',
-          base: tokens.splice(Math.max(0, caretIndex - 1), 1),
-          exponent: []
-        };
-        caretIndex = Math.max(0, caretIndex - 1);
-      } else if (char === '/') {
-        token = {
-          type: 'frac',
-          left: tokens.splice(Math.max(0, caretIndex - 1), 1),
-          right: []
-        };
-        caretIndex = Math.max(0, caretIndex - 1);
-      } else {
-        token = { type: 'char', latex: char };
+        const base = tokens.splice(Math.max(0, caretIndex - 1), 1);
+        token = { type: 'sup', base: base, exponent: [] };
+        tokens.splice(caretIndex - 1, 0, token);
+        caretIndex = caretIndex;
+        renderTokens();
+        return;
       }
+
+      if (char === '_') {
+        const base = tokens.splice(Math.max(0, caretIndex - 1), 1);
+        token = { type: 'sub', base: base, sub: [] };
+        tokens.splice(caretIndex - 1, 0, token);
+        caretIndex = caretIndex;
+        renderTokens();
+        return;
+      }
+
+      if (char === '/') {
+        const left = tokens.splice(Math.max(0, caretIndex - 1), 1);
+        token = { type: 'frac', left: left, right: [] };
+        tokens.splice(caretIndex - 1, 0, token);
+        caretIndex = caretIndex;
+        renderTokens();
+        return;
+      }
+
+      // insert into current nested structure if needed
+      const current = tokens[caretIndex - 1];
+      if (current && (current.type === 'sup' || current.type === 'frac' || current.type === 'sub')) {
+        const target = current.type === 'sup' ? current.exponent : current.type === 'frac' ? current.right : current.sub;
+        target.push({ type: 'char', latex: char });
+        caretIndex++;
+        renderTokens();
+        return;
+      }
+
+      token = { type: 'char', latex: char };
       tokens.splice(caretIndex, 0, token);
       caretIndex++;
       renderTokens();
