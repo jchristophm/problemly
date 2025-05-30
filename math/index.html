@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>MathQuill Mobile Fix</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.css" />
+  <style>
+    #mathquillContainer {
+      margin: 50px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      min-height: 60px;
+    }
+
+    #mathquillEditor {
+      min-height: 40px;
+    }
+
+    #debug {
+      margin-top: 10px;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+<div id="mathquillContainer">
+  <div id="mathquillEditor"></div>
+  <div id="debug"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
+<script>
+  const MQ = MathQuill.getInterface(2);
+  const editorDiv = document.getElementById('mathquillEditor');
+  const debugDiv = document.getElementById('debug');
+
+  // Init MathQuill
+  const mathField = MQ.MathField(editorDiv, {
+    spaceBehavesLikeTab: true,
+    handlers: {
+      edit: () => {
+        debugDiv.innerText = mathField.latex();
+      }
+    }
+  });
+
+  // Proxy input to capture mobile keyboard
+  const proxyInput = document.createElement('input');
+  proxyInput.type = 'text';
+  proxyInput.autocapitalize = 'off';
+  proxyInput.autocorrect = 'off';
+  proxyInput.spellcheck = false;
+  proxyInput.style.position = 'absolute';
+  proxyInput.style.opacity = 0;
+  proxyInput.style.height = '1px';
+  proxyInput.style.width = '1px';
+  proxyInput.style.zIndex = -1;
+  proxyInput.style.top = '0';
+  proxyInput.style.left = '0';
+  document.body.appendChild(proxyInput);
+
+  // On input: send to MathQuill
+  proxyInput.addEventListener('input', () => {
+    const value = proxyInput.value;
+    proxyInput.value = '';
+    if (value) {
+      for (let char of value) {
+        mathField.typedText(char);
+      }
+    }
+  });
+
+  // Focus proxy when touching math field
+  ['touchstart', 'mousedown', 'focus'].forEach(evt =>
+    editorDiv.addEventListener(evt, () => {
+      setTimeout(() => proxyInput.focus(), 0);
+    })
+  );
+
+  // Initial focus to make sure editor is live
+  setTimeout(() => {
+    mathField.latex('');
+    proxyInput.focus();
+  }, 100);
+</script>
+
+</body>
+</html>
