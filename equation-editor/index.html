@@ -54,7 +54,6 @@
     let latexBuffer = null;
     let tokens = [];
     let caretPath = [0];
-    let latexBuffer = ''; // NEW
 
     function resolvePath(path) {
       let ref = tokens;
@@ -92,7 +91,7 @@
 function render() {
   const base = [...tokens];
 
-  if (latexBuffer !== null) {
+  if (latexBuffer && latexBuffer.length > 0) {
     base.push({ type: 'latex', value: `\\textcolor{gray}{${latexBuffer}}` });
   }
 
@@ -120,17 +119,18 @@ function render() {
   const { ref, index } = resolvePath(caretPath);
 
   // Start or append to a LaTeX command
-  if (latexBuffer !== null || char === '\\') {
-    latexBuffer = (latexBuffer || '') + char;
+  if (char === ' ' && latexBuffer !== null) {
+    // Finalize latexBuffer
+    ref.splice(index, 0, { type: 'latex', value: latexBuffer });
+    caretPath[caretPath.length - 1]++;
+    latexBuffer = null;
     render();
     return;
   }
 
-  // Finalize LaTeX token on space
-  if (char === ' ' && latexBuffer !== null) {
-    ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-    caretPath[caretPath.length - 1]++;
-    latexBuffer = null;
+  if (latexBuffer !== null || char === '\\') {
+    // Continue building latexBuffer
+    latexBuffer = (latexBuffer || '') + char;
     render();
     return;
   }
