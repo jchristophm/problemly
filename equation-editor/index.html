@@ -22,60 +22,53 @@
       width: 100%;
       max-width: 600px;
     }
-    textarea {
-      width: 100%;
-      font-size: 1.2rem;
+    .editable {
+      min-height: 60px;
+      font-size: 1.25rem;
       padding: 0.75rem;
       border: 1px solid #ccc;
       border-radius: 6px;
-      resize: vertical;
-    }
-    .preview {
-      margin-top: 1rem;
-      padding: 0.75rem;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      background: #fafafa;
-      min-height: 3rem;
+      background: #fff;
+      outline: none;
+      white-space: pre-wrap;
     }
   </style>
 </head>
 <body>
   <div class="editor-container">
     <h2>MiniMathEditor</h2>
-    <textarea id="input" placeholder="Type math like 1/2mv^2 or sqrt(x)..."></textarea>
-    <div id="preview" class="preview"></div>
+    <div id="editor" class="editable" contenteditable="true"></div>
   </div>
 
   <script>
-    const input = document.getElementById('input');
-    const preview = document.getElementById('preview');
+    const editor = document.getElementById('editor');
 
-    function parseToLatex(raw) {
-      // Very naive starter parser for demo purposes
-      let parsed = raw
+    function toLatex(str) {
+      return str
         .replace(/sqrt\(([^\)]+)\)/g, '\\sqrt{$1}')
         .replace(/([a-zA-Z0-9]+)\^([a-zA-Z0-9]+)/g, '$1^{$2}')
         .replace(/([a-zA-Z0-9]+)_([a-zA-Z0-9]+)/g, '$1_{$2}')
         .replace(/([0-9a-zA-Z]+)\/(\d+|[a-zA-Z]+)/g, '\\frac{$1}{$2}')
         .replace(/\bpi\b/g, '\\pi');
-      return parsed;
     }
 
-    function render() {
-      const raw = input.value.trim();
-      const latex = parseToLatex(raw);
+    function renderInlineMath() {
+      const raw = editor.innerText;
+      const latex = toLatex(raw);
       try {
-        katex.render(latex, preview, {
-          throwOnError: false
+        katex.render(latex, editor, {
+          throwOnError: false,
+          displayMode: false
         });
       } catch (err) {
-        preview.innerText = '[Error rendering LaTeX]';
+        editor.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
       }
     }
 
-    input.addEventListener('input', render);
-    render(); // Initial render
+    editor.addEventListener('input', () => {
+      renderInlineMath();
+    });
   </script>
 </body>
 </html>
+
