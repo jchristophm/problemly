@@ -161,31 +161,36 @@
       }
     }
 
-    function diveIntoStructure(token, path, dir) {
-      if (!token) return null;
-      const fields = {
-        frac: dir < 0 ? 'left' : 'right',
-        sup: 'exponent',
-        sub: 'sub',
-        group: 'tokens'
-      };
-      const key = fields[token.type];
-      if (key && Array.isArray(token[key])) {
+function diveIntoStructure(token, path, dir) {
+  if (!token) return null;
+
+  const fields = {
+    frac: dir < 0 ? ['right', 'left'] : ['left', 'right'],
+    sup: ['exponent'],
+    sub: ['sub'],
+    group: ['tokens']
+  };
+
+  const keys = fields[token.type];
+  if (keys) {
+    for (const key of keys) {
+      if (Array.isArray(token[key])) {
         const target = token[key];
         return path.concat(key, dir < 0 ? target.length : 0);
       }
-      return null;
     }
+  }
+  return null;
+}
 
 function moveCaret(dir) {
   let path = [...caretPath];
   const { ref, index } = resolvePath(path);
 
-  // Try diving into the structure at current or previous position
+  // Prioritize diving into nearby structured token (both directions)
   const diveIdx = dir > 0 ? index : index - 1;
   const diveToken = ref[diveIdx];
   const divePath = diveIntoStructure(diveToken, path.slice(0, -1).concat(diveIdx), dir);
-
   if (divePath) {
     caretPath = divePath;
     render();
@@ -200,7 +205,7 @@ function moveCaret(dir) {
     return;
   }
 
-  // Bubble up to parent container
+  // Move up one layer and across
   for (let i = path.length - 2; i >= 0; i -= 2) {
     const parentPath = path.slice(0, i);
     const { ref: pRef, index: pIdx } = resolvePath(parentPath);
