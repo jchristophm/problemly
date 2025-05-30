@@ -6,39 +6,53 @@
   <title>MiniMathEditor</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #f7f7f7;
-      padding: 2rem;
-      display: flex;
-      justify-content: center;
+<style>
+  body {
+    font-family: sans-serif;
+    background: #f7f7f7;
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+  }
+  .editor-container {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 600px;
+    position: relative;
+  }
+  #renderedField {
+    min-height: 60px;
+    font-size: 1.25rem;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    outline: none;
+    white-space: nowrap;
+    cursor: text;
+    position: relative;
+  }
+  #ghostInput {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .caret-blink::after {
+    content: '|';
+    color: gray;
+    font-weight: normal;
+    animation: blink 1s steps(2, start) infinite;
+    margin-left: 2px;
+  }
+  @keyframes blink {
+    to {
+      visibility: hidden;
     }
-    .editor-container {
-      background: white;
-      border-radius: 10px;
-      padding: 1rem;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 600px;
-      position: relative;
-    }
-    #renderedField {
-      min-height: 60px;
-      font-size: 1.25rem;
-      padding: 0.75rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      background: #fff;
-      outline: none;
-      white-space: nowrap;
-    }
-    #ghostInput {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
   <div class="editor-container">
@@ -88,23 +102,42 @@
       return deepCopy;
     }
 
-    function render() {
-      const base = [...tokens];
-      const withCaret = renderTokensWithCaret(base, caretPath);
-      const latex = withCaret.map(tokenToLatex).join('');
+function render() {
+  if (tokens.length === 0 && !latexBuffer) {
+    renderedField.innerHTML = '';
+    const placeholder = document.createElement('span');
+    placeholder.style.color = 'gray';
+    placeholder.textContent = 'Start typing...';
+    const caret = document.createElement('span');
+    caret.className = 'caret-blink';
+    renderedField.appendChild(placeholder);
+    renderedField.appendChild(caret);
+    return;
+  }
 
-      try {
-        katex.render(latex, renderedField, { throwOnError: false });
+  const base = [...tokens];
+  if (latexBuffer && latexBuffer.length > 0) {
+    renderedField.innerHTML = '';
+    katex.render(base.map(tokenToLatex).join(''), renderedField, { throwOnError: false });
+    const ghost = document.createElement('span');
+    ghost.style.color = 'gray';
+    ghost.style.fontFamily = 'monospace';
+    ghost.textContent = latexBuffer;
+    const caret = document.createElement('span');
+    caret.className = 'caret-blink';
+    renderedField.appendChild(ghost);
+    renderedField.appendChild(caret);
+    return;
+  }
 
-        // Append raw latexBuffer if it's active
-        if (latexBuffer && latexBuffer.length > 0) {
-          renderedField.innerHTML += `<span style="color:gray; font-family:monospace;">${latexBuffer}</span>`;
-        }
-
-      } catch {
-        renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
-      }
-    }
+  const withCaret = renderTokensWithCaret(base, caretPath);
+  const latex = withCaret.map(tokenToLatex).join('');
+  try {
+    katex.render(latex, renderedField, { throwOnError: false });
+  } catch {
+    renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
+  }
+}
 
     function insertChar(char) {
       const { ref, index } = resolvePath(caretPath);
@@ -299,6 +332,11 @@
 
     renderedField.addEventListener('focus', () => ghostInput.focus());
     render();
+
+    window.addEventListener('DOMContentLoaded', () => {
+      ghostInput.focus();
+    });
+  
   </script>
 </body>
 </html>
