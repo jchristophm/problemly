@@ -91,7 +91,7 @@
 function render() {
   const base = [...tokens];
 
-  if (latexBuffer && latexBuffer.length > 0) {
+  if (latexBuffer !== null && latexBuffer.length > 0) {
     base.push({ type: 'latex', value: `\\textcolor{gray}{${latexBuffer}}` });
   }
 
@@ -193,7 +193,7 @@ function deleteChar() {
       const { ref, index } = resolvePath(caretPath);
       ref.splice(index, 0, { type: 'latex', value: latexBuffer });
       caretPath[caretPath.length - 1]++;
-      latexBuffer = '';
+      latexBuffer = null;
     }
 
     function diveIntoStructure(token, path, dir) {
