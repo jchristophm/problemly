@@ -161,46 +161,52 @@
       }
     }
 
+    function diveIntoStructure(token, path, dir) {
+      if (!token) return null;
+      const fields = {
+        frac: dir < 0 ? 'left' : 'right',
+        sup: 'exponent',
+        sub: 'sub',
+        group: 'tokens'
+      };
+      const key = fields[token.type];
+      if (key && Array.isArray(token[key])) {
+        const target = token[key];
+        return path.concat(key, dir < 0 ? target.length : 0);
+      }
+      return null;
+    }
+
     function moveCaret(dir) {
       let path = [...caretPath];
       const { ref, index } = resolvePath(path);
-      const newIndex = index + dir;
+      const flatIdx = dir < 0 ? index - 1 : index;
 
-      if (newIndex >= 0 && newIndex <= ref.length) {
-        caretPath = path.slice(0, -1).concat(newIndex);
-        render();
-        return;
-      }
-
-      // Dive into adjacent structures
-      const flat = dir < 0 ? index - 1 : index;
-      if (flat >= 0 && flat < ref.length) {
-        const t = ref[flat];
-        let dive = null;
-        if (t.type === 'frac') dive = dir < 0 ? ['left'] : ['right'];
-        else if (t.type === 'sup') dive = ['exponent'];
-        else if (t.type === 'sub') dive = ['sub'];
-        else if (t.type === 'group') dive = ['tokens'];
-
-        if (dive) {
-          const pathIn = caretPath.slice(0, -1).concat(flat, ...dive);
-          const target = resolvePath(pathIn).ref;
-          caretPath = pathIn.concat(dir < 0 ? target.length : 0);
-          render();
-          return;
+      // Dive into structure
+      if (flatIdx >= 0 && flatIdx < ref.length) {
+        const divePath = diveIntoStructure(ref[flatIdx], path.slice(0, -1).concat(flatIdx), dir);
+        if (divePath) {
+          caretPath = divePath;
+          render(); return;
         }
       }
 
-      // Climb out
+      // Move within same array
+      const newIndex = index + dir;
+      if (newIndex >= 0 && newIndex <= ref.length) {
+        caretPath = path.slice(0, -1).concat(newIndex);
+        render(); return;
+      }
+
+      // Climb up
       for (let i = path.length - 2; i >= 0; i -= 2) {
         const parentPath = path.slice(0, i);
         const { ref: pRef, index: pIdx } = resolvePath(parentPath);
         if ((dir > 0 && pIdx < pRef.length) || (dir < 0 && pIdx > 0)) {
           caretPath = parentPath.slice(0, -1).concat(pIdx + dir);
-          break;
+          render(); return;
         }
       }
-      render();
     }
 
     renderedField.addEventListener('click', () => ghostInput.focus());
@@ -224,3 +230,4 @@
   </script>
 </body>
 </html>
+
