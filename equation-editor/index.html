@@ -310,17 +310,12 @@ function commitLatexBuffer() {
     renderedField.addEventListener('click', () => ghostInput.focus());
 
 ghostInput.addEventListener('input', e => {
-  if (justCommittedLatex) {
-    justCommittedLatex = false;
-    ghostInput.value = '';  // prevent reprocessing
-    return;
-  }
-
   const val = ghostInput.value;
   ghostInput.value = '';
 
   if (val === ' ') {
-    if (commitLatexBuffer()) {
+    if (latexBuffer !== null) {
+      commitLatexBuffer(); // this already nulls the buffer
       render();
     } else {
       moveCaret(1);
@@ -336,15 +331,9 @@ ghostInput.addEventListener('input', e => {
         e.preventDefault(); deleteChar();
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault(); moveCaret(-1);
-      } else if (e.key === 'ArrowRight' || e.key === ' ') {
+      } else if (e.key === 'ArrowRight') {
         e.preventDefault();
-      if (latexBuffer) {
-        commitLatexBuffer();
-        latexBuffer = null; // <-- make absolutely sure it’s gone
-        render();
-      } else {
-          moveCaret(1);
-        }
+        moveCaret(1);
       }
     });
 
