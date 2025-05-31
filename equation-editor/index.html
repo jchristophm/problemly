@@ -104,7 +104,7 @@
     }
 
 function render() {
-  if (tokens.length === 0 && !latexBuffer) {
+  if (tokens.length === 0 && (!latexBuffer || latexBuffer.length === 0)) {
     renderedField.innerHTML = '';
     const placeholder = document.createElement('span');
     placeholder.style.color = 'gray';
@@ -117,20 +117,6 @@ function render() {
   }
 
   const base = [...tokens];
-  if (latexBuffer && latexBuffer.length > 0) {
-    renderedField.innerHTML = '';
-    katex.render(base.map(tokenToLatex).join(''), renderedField, { throwOnError: false });
-    const ghost = document.createElement('span');
-    ghost.style.color = 'gray';
-    ghost.style.fontFamily = 'monospace';
-    ghost.textContent = latexBuffer;
-    const caret = document.createElement('span');
-    caret.className = 'caret-blink';
-    renderedField.appendChild(ghost);
-    renderedField.appendChild(caret);
-    return;
-  }
-
   const withCaret = renderTokensWithCaret(base, caretPath);
   const latex = withCaret.map(tokenToLatex).join('');
   try {
