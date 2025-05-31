@@ -220,13 +220,14 @@ function render() {
       }
     }
 
-    function commitLatexBuffer() {
-      if (!latexBuffer) return;
-      const { ref, index } = resolvePath(caretPath);
-      ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-      caretPath[caretPath.length - 1]++;
-      latexBuffer = null;
-    }
+function commitLatexBuffer() {
+  if (!latexBuffer) return;
+  const { ref, index } = resolvePath(caretPath);
+  ref.splice(index, 0, { type: 'latex', value: latexBuffer });
+  caretPath[caretPath.length - 1]++;
+  latexBuffer = null;
+  render(); // <-- important: render now so next keystroke doesn't attach
+}
 
     function diveIntoStructure(token, path, dir) {
       if (!token) return null;
