@@ -142,29 +142,30 @@ function render() {
 function insertChar(char) {
   const { ref, index } = resolvePath(caretPath);
 
-  // Start a new LaTeX command
+  // Finalize latexBuffer on space
+  if (char === ' ' && latexBuffer !== null) {
+    ref.splice(index, 0, { type: 'latex', value: latexBuffer });
+    caretPath[caretPath.length - 1]++;
+    latexBuffer = null;
+    render();
+    return;
+  }
+
+  // Start new LaTeX command
   if (char === '\\') {
     latexBuffer = '\\';
     render();
     return;
   }
 
-  // If we’re building a LaTeX command
+  // Continue building latexBuffer
   if (latexBuffer !== null) {
-    if (char === ' ') {
-      // Finalize the LaTeX token
-      ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-      caretPath[caretPath.length - 1]++;
-      latexBuffer = null;
-      render();
-    } else {
-      latexBuffer += char;
-      render();
-    }
+    latexBuffer += char;
+    render();
     return;
   }
 
-  // Handle structure chars
+  // Handle structure characters
   if (char === '^') {
     const base = ref.splice(index - 1, 1);
     const sup = { type: 'sup', base, exponent: [] };
