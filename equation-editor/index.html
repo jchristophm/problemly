@@ -228,8 +228,13 @@ function insertChar(char) {
     }
 
 function commitLatexBuffer() {
+  const { ref, index } = resolvePath(caretPath);
+  ref.splice(index, 0, { type: 'latex', value: latexBuffer });
+  caretPath[caretPath.length - 1]++;
   latexBuffer = null;
+  render();
 }
+
 
     function diveIntoStructure(token, path, dir) {
       if (!token) return null;
