@@ -120,7 +120,17 @@ function render() {
 
   // Render KaTeX from current tokens
   const withCaret = renderTokensWithCaret([...tokens], caretPath);
-  const latex = withCaret.map(tokenToLatex).join('');
+  let latex = '';
+  for (let i = 0; i < withCaret.length; i++) {
+    const curr = withCaret[i];
+    const prev = withCaret[i - 1];
+
+    // If previous was latex and current is char or caret, insert space
+    if (prev?.type === 'latex' && (curr.type === 'char' || curr.type === 'caret')) {
+      latex += ' ';
+    }
+    latex += tokenToLatex(curr);
+  }
 
   try {
     katex.render(latex, renderedField, { throwOnError: false });
