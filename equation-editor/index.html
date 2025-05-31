@@ -158,14 +158,13 @@ function insertChar(char) {
       latexBuffer = null;
       render();
     } else {
-      // Still building LaTeX command
       latexBuffer += char;
       render();
     }
     return;
   }
 
-  // Structured characters
+  // Handle structure chars
   if (char === '^') {
     const base = ref.splice(index - 1, 1);
     const sup = { type: 'sup', base, exponent: [] };
@@ -205,7 +204,7 @@ function insertChar(char) {
     }
   }
 
-  // Regular character
+  // Default character
   ref.splice(index, 0, { type: 'char', latex: char });
   caretPath[caretPath.length - 1]++;
   render();
