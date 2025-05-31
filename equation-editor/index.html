@@ -142,30 +142,28 @@ function render() {
 function insertChar(char) {
   const { ref, index } = resolvePath(caretPath);
 
-  // Finalize latexBuffer on space
+  // Commit buffer on space
   if (char === ' ' && latexBuffer !== null) {
-    ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-    caretPath[caretPath.length - 1]++;
-    latexBuffer = null;
+    commitLatexBuffer(); // no further action needed
     render();
     return;
   }
 
-  // Start new LaTeX command
+  // Begin a new LaTeX command
   if (char === '\\') {
     latexBuffer = '\\';
     render();
     return;
   }
 
-  // Continue building latexBuffer
+  // Continue existing LaTeX command
   if (latexBuffer !== null) {
     latexBuffer += char;
     render();
     return;
   }
 
-  // Handle structure characters
+  // --- STRUCTURE CHAR HANDLERS (unchanged) ---
   if (char === '^') {
     const base = ref.splice(index - 1, 1);
     const sup = { type: 'sup', base, exponent: [] };
@@ -205,7 +203,7 @@ function insertChar(char) {
     }
   }
 
-  // Default character
+  // Default: Insert as plain char
   ref.splice(index, 0, { type: 'char', latex: char });
   caretPath[caretPath.length - 1]++;
   render();
@@ -229,13 +227,13 @@ function insertChar(char) {
     }
 
 function commitLatexBuffer() {
+  if (!latexBuffer) return false; // return false if nothing committed
   const { ref, index } = resolvePath(caretPath);
   ref.splice(index, 0, { type: 'latex', value: latexBuffer });
   caretPath[caretPath.length - 1]++;
   latexBuffer = null;
-  render();
+  return true; // signal buffer was committed
 }
-
 
     function diveIntoStructure(token, path, dir) {
       if (!token) return null;
@@ -307,21 +305,22 @@ function commitLatexBuffer() {
 
     renderedField.addEventListener('click', () => ghostInput.focus());
 
-    ghostInput.addEventListener('input', e => {
-      const val = ghostInput.value;
-      ghostInput.value = '';
+ghostInput.addEventListener('input', e => {
+  const val = ghostInput.value;
+  ghostInput.value = '';
 
-      if (val === ' ') {
-        if (latexBuffer) {
-          commitLatexBuffer();
-          render();
-        } else {
-          moveCaret(1);
-        }
-      } else if (val) {
-        insertChar(val);
-      }
-    });
+  if (val === ' ') {
+    if (commitLatexBuffer()) {
+      render();
+    } else {
+      moveCaret(1);
+    }
+    return;
+  }
+
+  if (val) insertChar(val);
+});
+
 
     ghostInput.addEventListener('keydown', e => {
       if (e.key === 'Backspace') {
