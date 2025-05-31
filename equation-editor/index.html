@@ -142,30 +142,31 @@ function render() {
 function insertChar(char) {
   const { ref, index } = resolvePath(caretPath);
 
-  // Begin a new LaTeX command
+  // BEGIN a LaTeX command if '\' is typed
   if (char === '\\') {
     latexBuffer = '\\';
     render();
     return;
   }
 
-  // Continue a LaTeX command in progress
+  // CONTINUE LaTeX command if buffer is active
   if (latexBuffer !== null) {
     if (char === ' ') {
-      // Commit the buffer on space
+      // COMMIT LaTeX command
       ref.splice(index, 0, { type: 'latex', value: latexBuffer });
       caretPath[caretPath.length - 1]++;
       latexBuffer = null;
       render();
+      return;
     } else {
-      // Keep adding to buffer
+      // Append to LaTeX buffer
       latexBuffer += char;
       render();
+      return;
     }
-    return;
   }
 
-  // STRUCTURE CHAR HANDLERS (unchanged)
+  // STRUCTURE CHARS
   if (char === '^') {
     const base = ref.splice(index - 1, 1);
     const sup = { type: 'sup', base, exponent: [] };
@@ -205,7 +206,7 @@ function insertChar(char) {
     }
   }
 
-  // Default: Insert as plain char
+  // FALLBACK: insert as regular char
   ref.splice(index, 0, { type: 'char', latex: char });
   caretPath[caretPath.length - 1]++;
   render();
