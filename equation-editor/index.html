@@ -234,9 +234,11 @@ function commitLatexBuffer() {
   if (!latexBuffer) return false; // return false if nothing committed
   const { ref, index } = resolvePath(caretPath);
   ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-  caretPath[caretPath.length - 1]++;
   latexBuffer = null;
-  return true; // signal buffer was committed
+  
+  // Reset caret after token to avoid reabsorbing next input
+  caretPath = caretPath.slice(0, -1).concat(index + 1);
+  return true;
 }
 
     function diveIntoStructure(token, path, dir) {
