@@ -139,69 +139,73 @@ function render() {
   }
 }
 
-    function insertChar(char) {
-      const { ref, index } = resolvePath(caretPath);
+function insertChar(char) {
+  const { ref, index } = resolvePath(caretPath);
 
-      // Finalize latex buffer on space
-      if (char === ' ' && latexBuffer !== null) {
-        ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-        caretPath[caretPath.length - 1]++;
-        latexBuffer = null;
-        render();
-        return;
-      }
+  // Finalize latexBuffer on space
+  if (char === ' ' && latexBuffer !== null) {
+    commitLatexBuffer();
+    return;
+  }
 
-      // Build LaTeX buffer if typing command
-      if (latexBuffer !== null || char === '\\') {
-        latexBuffer = (latexBuffer || '') + char;
-        render();
-        return;
-      }
+  // If buffer was just committed and space handled it, exit early
+  if (latexBuffer !== null) {
+    latexBuffer += char;
+    render();
+    return;
+  }
 
-      // Structured symbols
-      if (char === '^') {
-        const base = ref.splice(index - 1, 1);
-        const sup = { type: 'sup', base, exponent: [] };
-        ref.splice(index - 1, 0, sup);
-        caretPath = caretPath.slice(0, -1).concat(index - 1, 'exponent', 0);
-        render(); return;
-      }
+  if (char === '\\') {
+    latexBuffer = '\\';
+    render();
+    return;
+  }
 
-      if (char === '_') {
-        const base = ref.splice(index - 1, 1);
-        const sub = { type: 'sub', base, sub: [] };
-        ref.splice(index - 1, 0, sub);
-        caretPath = caretPath.slice(0, -1).concat(index - 1, 'sub', 0);
-        render(); return;
-      }
+  // Structure characters
+  if (char === '^') {
+    const base = ref.splice(index - 1, 1);
+    const sup = { type: 'sup', base, exponent: [] };
+    ref.splice(index - 1, 0, sup);
+    caretPath = caretPath.slice(0, -1).concat(index - 1, 'exponent', 0);
+    render(); return;
+  }
 
-      if (char === '/') {
-        const left = ref.splice(index - 1, 1);
-        const frac = { type: 'frac', left, right: [] };
-        ref.splice(index - 1, 0, frac);
-        caretPath = caretPath.slice(0, -1).concat(index - 1, 'right', 0);
-        render(); return;
-      }
+  if (char === '_') {
+    const base = ref.splice(index - 1, 1);
+    const sub = { type: 'sub', base, sub: [] };
+    ref.splice(index - 1, 0, sub);
+    caretPath = caretPath.slice(0, -1).concat(index - 1, 'sub', 0);
+    render(); return;
+  }
 
-      if (char === '(') {
-        const group = { type: 'group', tokens: [] };
-        ref.splice(index, 0, group);
-        caretPath = caretPath.slice(0, -1).concat(index, 'tokens', 0);
-        render(); return;
-      }
+  if (char === '/') {
+    const left = ref.splice(index - 1, 1);
+    const frac = { type: 'frac', left, right: [] };
+    ref.splice(index - 1, 0, frac);
+    caretPath = caretPath.slice(0, -1).concat(index - 1, 'right', 0);
+    render(); return;
+  }
 
-      if (char === ')') {
-        const groupIndex = caretPath.lastIndexOf('tokens');
-        if (groupIndex !== -1) {
-          caretPath = caretPath.slice(0, groupIndex).concat(caretPath[groupIndex - 1] + 1);
-          render(); return;
-        }
-      }
+  if (char === '(') {
+    const group = { type: 'group', tokens: [] };
+    ref.splice(index, 0, group);
+    caretPath = caretPath.slice(0, -1).concat(index, 'tokens', 0);
+    render(); return;
+  }
 
-      ref.splice(index, 0, { type: 'char', latex: char });
-      caretPath[caretPath.length - 1]++;
-      render();
+  if (char === ')') {
+    const groupIndex = caretPath.lastIndexOf('tokens');
+    if (groupIndex !== -1) {
+      caretPath = caretPath.slice(0, groupIndex).concat(caretPath[groupIndex - 1] + 1);
+      render(); return;
     }
+  }
+
+  // Default character
+  ref.splice(index, 0, { type: 'char', latex: char });
+  caretPath[caretPath.length - 1]++;
+  render();
+}
 
     function deleteChar() {
       const { ref, index } = resolvePath(caretPath);
