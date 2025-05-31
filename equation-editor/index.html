@@ -142,26 +142,30 @@ function render() {
 function insertChar(char) {
   const { ref, index } = resolvePath(caretPath);
 
-  // Finalize latexBuffer on space
-  if (char === ' ' && latexBuffer !== null) {
-    commitLatexBuffer();
-    return;
-  }
-
-  // If buffer was just committed and space handled it, exit early
-  if (latexBuffer !== null) {
-    latexBuffer += char;
-    render();
-    return;
-  }
-
+  // Start a new LaTeX command
   if (char === '\\') {
     latexBuffer = '\\';
     render();
     return;
   }
 
-  // Structure characters
+  // If we’re building a LaTeX command
+  if (latexBuffer !== null) {
+    if (char === ' ') {
+      // Finalize the LaTeX token
+      ref.splice(index, 0, { type: 'latex', value: latexBuffer });
+      caretPath[caretPath.length - 1]++;
+      latexBuffer = null;
+      render();
+    } else {
+      // Still building LaTeX command
+      latexBuffer += char;
+      render();
+    }
+    return;
+  }
+
+  // Structured characters
   if (char === '^') {
     const base = ref.splice(index - 1, 1);
     const sup = { type: 'sup', base, exponent: [] };
@@ -201,7 +205,7 @@ function insertChar(char) {
     }
   }
 
-  // Default character
+  // Regular character
   ref.splice(index, 0, { type: 'char', latex: char });
   caretPath[caretPath.length - 1]++;
   render();
@@ -225,12 +229,7 @@ function insertChar(char) {
     }
 
 function commitLatexBuffer() {
-  if (!latexBuffer) return;
-  const { ref, index } = resolvePath(caretPath);
-  ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-  caretPath[caretPath.length - 1]++;
   latexBuffer = null;
-  render(); // <-- important: render now so next keystroke doesn't attach
 }
 
     function diveIntoStructure(token, path, dir) {
