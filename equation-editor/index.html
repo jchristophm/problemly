@@ -68,6 +68,7 @@
     let tokens = [];
     let caretPath = [0];
     let latexBuffer = null;
+    let justCommittedLatex = false;
 
     function resolvePath(path) {
       let ref = tokens;
@@ -309,22 +310,26 @@ function commitLatexBuffer() {
     renderedField.addEventListener('click', () => ghostInput.focus());
 
 ghostInput.addEventListener('input', e => {
+  if (justCommittedLatex) {
+    justCommittedLatex = false;
+    ghostInput.value = '';  // prevent reprocessing
+    return;
+  }
+
   const val = ghostInput.value;
   ghostInput.value = '';
 
-    if (val === ' ') {
-      if (commitLatexBuffer()) {
-        latexBuffer = null; // extra safety: kill it again here
-        render();
-      } else {
-        moveCaret(1);
-      }
-      return;
+  if (val === ' ') {
+    if (commitLatexBuffer()) {
+      render();
+    } else {
+      moveCaret(1);
     }
+    return;
+  }
 
   if (val) insertChar(val);
 });
-
 
     ghostInput.addEventListener('keydown', e => {
       if (e.key === 'Backspace') {
@@ -335,6 +340,7 @@ ghostInput.addEventListener('input', e => {
         e.preventDefault();
         if (latexBuffer) {
           commitLatexBuffer();
+          justCommittedLatex = true;  // <-- THIS FIXES YOUR BUG
           render();
         } else {
           moveCaret(1);
