@@ -104,8 +104,10 @@
     }
 
 function render() {
+  renderedField.innerHTML = '';
+
+  // Case 1: no tokens, no buffer — show placeholder + caret
   if (tokens.length === 0 && (!latexBuffer || latexBuffer.length === 0)) {
-    renderedField.innerHTML = '';
     const placeholder = document.createElement('span');
     placeholder.style.color = 'gray';
     placeholder.textContent = 'Start typing...';
@@ -116,13 +118,29 @@ function render() {
     return;
   }
 
-  const base = [...tokens];
-  const withCaret = renderTokensWithCaret(base, caretPath);
+  // Render KaTeX from current tokens
+  const withCaret = renderTokensWithCaret([...tokens], caretPath);
   const latex = withCaret.map(tokenToLatex).join('');
+
   try {
     katex.render(latex, renderedField, { throwOnError: false });
   } catch {
     renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
+  }
+
+  // If we're in the middle of a LaTeX command (buffer active), show it separately
+  if (latexBuffer && latexBuffer.length > 0) {
+    const ghost = document.createElement('span');
+    ghost.style.color = 'gray';
+    ghost.style.fontFamily = 'monospace';
+    ghost.style.marginLeft = '4px';
+    ghost.textContent = latexBuffer;
+
+    const caret = document.createElement('span');
+    caret.className = 'caret-blink';
+
+    renderedField.appendChild(ghost);
+    renderedField.appendChild(caret);
   }
 }
 
@@ -304,6 +322,7 @@ ghostInput.addEventListener('input', e => {
   if (val === ' ') {
     if (latexBuffer !== null) {
       commitLatexBuffer(); // this already nulls the buffer
+      latexBuffer = null;  // <- must be here
       render();
     } else {
       moveCaret(1);
