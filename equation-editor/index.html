@@ -151,7 +151,7 @@ function insertChar(char) {
   }
 
   // CONTINUE LaTeX command if buffer is active
-  if (latexBuffer !== null) {
+  if (latexBuffer !== null && latexBuffer.length > 0) {
     if (char === ' ') {
       // COMMIT LaTeX command
       ref.splice(index, 0, { type: 'latex', value: latexBuffer });
@@ -338,11 +338,11 @@ ghostInput.addEventListener('input', e => {
         e.preventDefault(); moveCaret(-1);
       } else if (e.key === 'ArrowRight' || e.key === ' ') {
         e.preventDefault();
-        if (latexBuffer) {
-          commitLatexBuffer();
-          justCommittedLatex = true;  // <-- THIS FIXES YOUR BUG
-          render();
-        } else {
+      if (latexBuffer) {
+        commitLatexBuffer();
+        latexBuffer = null; // <-- make absolutely sure it’s gone
+        render();
+      } else {
           moveCaret(1);
         }
       }
