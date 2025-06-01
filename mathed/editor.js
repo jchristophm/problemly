@@ -37,9 +37,18 @@ function tokenToLatex(token) {
       return `\\left(${(token.tokens || []).map(tokenToLatex).join('')}\\right)`;
 
     case 'caret':
-      return latexBuffer && latexBuffer.length > 1
-        ? `\\textcolor{gray}{${latexBuffer}}`
-        : `\\textcolor{gray}{|}`;
+      if (!latexBuffer) return '\\textcolor{gray}{|}';
+
+      const raw = latexBuffer.trim();
+
+      // Only show ghost if it’s something like \a, \mu, etc.
+      const match = raw.match(/^\\[a-zA-Z]{1,}$/);
+
+      if (match) {
+        return `\\textcolor{gray}{${raw}}`;
+      } else {
+        return `\\textcolor{gray}{|}`;
+      }
 
     case 'char':
     default:
