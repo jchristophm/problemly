@@ -90,33 +90,29 @@ function render() {
 function insertChar(char) {
   const { ref, index } = resolvePath(caretPath);
 
-  // Start LaTeX buffer
+  // Start new latex buffer
   if (char === '\\') {
     latexBuffer = '\\';
     render();
     return;
   }
 
-  // Handle LaTeX buffer completion
-  if (latexBuffer !== null && latexBuffer.length > 0) {
+  // Continue latex buffer
+  if (latexBuffer !== null) {
     if (char === ' ') {
-      const command = latexBuffer.slice(1); // Remove backslash
-      let newToken = null;
-      let newCaret = null;
+      const match = latexBuffer.match(/^\\([a-zA-Z]+)$/);
+      const command = match ? match[1] : null;
 
+      let newToken = null;
       if (['sin', 'cos', 'tan', 'log', 'ln'].includes(command)) {
         newToken = { type: 'func', name: command, arg: [] };
-        newCaret = caretPath.slice(0, -1).concat(index, 'arg', 0);
       } else if (['vec', 'hat', 'bar', 'dot'].includes(command)) {
         newToken = { type: 'accent', accent: command, arg: [] };
-        newCaret = caretPath.slice(0, -1).concat(index, 'arg', 0);
       } else if (command === 'sqrt') {
         newToken = { type: 'root', radicand: [] };
-        newCaret = caretPath.slice(0, -1).concat(index, 'radicand', 0);
       }
 
       if (newToken) {
-        console.log('[Insert] Structured token:', newToken);
         ref.splice(index, 0, newToken);
 
         if (newToken.type === 'func') {
@@ -133,21 +129,28 @@ function insertChar(char) {
         render();
         return;
       } else {
-        console.warn('[Fallback] Unknown LaTeX command:', command);
+        // Fallback to raw LaTeX insert
         ref.splice(index, 0, { type: 'latex', value: latexBuffer });
         caretPath[caretPath.length - 1]++;
         latexBuffer = null;
         render();
         return;
       }
+    } else {
+      latexBuffer += char;
+      render();
+      return;
+    }
+  }
 
-  // Handle structure characters
+  // Handle structural characters
   if (char === '^') {
     const base = ref.splice(index - 1, 1);
     const sup = { type: 'sup', base, exponent: [] };
     ref.splice(index - 1, 0, sup);
     caretPath = caretPath.slice(0, -1).concat(index - 1, 'exponent', 0);
-    render(); return;
+    render();
+    return;
   }
 
   if (char === '_') {
@@ -155,7 +158,8 @@ function insertChar(char) {
     const sub = { type: 'sub', base, sub: [] };
     ref.splice(index - 1, 0, sub);
     caretPath = caretPath.slice(0, -1).concat(index - 1, 'sub', 0);
-    render(); return;
+    render();
+    return;
   }
 
   if (char === '/') {
@@ -163,21 +167,24 @@ function insertChar(char) {
     const frac = { type: 'frac', left, right: [] };
     ref.splice(index - 1, 0, frac);
     caretPath = caretPath.slice(0, -1).concat(index - 1, 'right', 0);
-    render(); return;
+    render();
+    return;
   }
 
   if (char === '(') {
     const group = { type: 'group', tokens: [] };
     ref.splice(index, 0, group);
     caretPath = caretPath.slice(0, -1).concat(index, 'tokens', 0);
-    render(); return;
+    render();
+    return;
   }
 
   if (char === ')') {
     const groupIndex = caretPath.lastIndexOf('tokens');
     if (groupIndex !== -1) {
       caretPath = caretPath.slice(0, groupIndex).concat(caretPath[groupIndex - 1] + 1);
-      render(); return;
+      render();
+      return;
     }
   }
 
@@ -185,10 +192,11 @@ function insertChar(char) {
     const root = { type: 'root', radicand: [] };
     ref.splice(index, 0, root);
     caretPath = caretPath.slice(0, -1).concat(index, 'radicand', 0);
-    render(); return;
+    render();
+    return;
   }
 
-  // Fallback: insert char
+  // Regular char
   ref.splice(index, 0, { type: 'char', latex: char });
   caretPath[caretPath.length - 1]++;
   render();
