@@ -106,6 +106,15 @@ function render() {
     latex += tokenToLatex(curr);
   }
 
+  if (latexBuffer && latexBuffer.length > 1) {
+  const ghost = document.createElement('span');
+  ghost.style.color = 'gray';
+  ghost.style.fontFamily = 'monospace';
+  ghost.style.marginLeft = '4px';
+  ghost.textContent = latexBuffer;
+  renderedField.appendChild(ghost);
+}
+
   try {
     katex.render(latex, renderedField, { throwOnError: false });
   } catch {
