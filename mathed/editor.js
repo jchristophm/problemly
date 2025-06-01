@@ -24,6 +24,15 @@ function tokenToLatex(token) {
     case 'group': return `\\left(${(token.tokens || []).map(tokenToLatex).join('')}\\right)`;
     case 'caret': return '\\textcolor{gray}{|}';
     case 'char': default: return token.latex || '';
+    case 'root':
+      if (token.index && token.index.length > 0) {
+        return `\\sqrt[${token.index.map(tokenToLatex).join('')}]{${
+          token.radicand.map(tokenToLatex).join('')
+        }}`;
+      } else {
+        return `\\sqrt{${token.radicand.map(tokenToLatex).join('')}}`;
+      }
+
   }
 }
 
@@ -129,6 +138,12 @@ function insertChar(char) {
       render(); return;
     }
   }
+  if (char === '#') {
+    const root = { type: 'root', radicand: [] };
+    ref.splice(index, 0, root);
+      caretPath = caretPath.slice(0, -1).concat(index, 'radicand', 0);
+      render(); return;
+  }
 
   ref.splice(index, 0, { type: 'char', latex: char });
   caretPath[caretPath.length - 1]++;
@@ -164,7 +179,8 @@ function diveIntoStructure(token, path, dir) {
     frac: dir < 0 ? ['right', 'left'] : ['left', 'right'],
     sup: ['exponent'],
     sub: ['sub'],
-    group: ['tokens']
+    group: ['tokens'],
+    root: ['radicand']
   };
   const keys = fields[token.type];
   if (keys) {
