@@ -206,6 +206,14 @@ function insertChar(char) {
   }
 
   // Regular char
+  // If we're in a LaTeX buffer, don't insert char tokens
+  if (latexBuffer !== null) {
+    latexBuffer += char;
+    render();
+    return;
+  }
+
+  // Regular char
   ref.splice(index, 0, { type: 'char', latex: char });
   caretPath[caretPath.length - 1]++;
   render();
