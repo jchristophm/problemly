@@ -218,10 +218,31 @@ function deleteChar() {
 
 function commitLatexBuffer() {
   if (!latexBuffer) return false;
+
   const { ref, index } = resolvePath(caretPath);
-  ref.splice(index, 0, { type: 'latex', value: latexBuffer });
+  const command = latexBuffer.trim().replace(/^\\/, '');
+  let newToken = null;
+
+  if (['sin', 'cos', 'tan', 'log', 'ln'].includes(command)) {
+    newToken = { type: 'func', name: command, arg: [] };
+    caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
+  } else if (['vec', 'hat', 'bar', 'dot'].includes(command)) {
+    newToken = { type: 'accent', accent: command, arg: [] };
+    caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
+  } else if (command === 'sqrt') {
+    newToken = { type: 'root', radicand: [] };
+    caretPath = caretPath.slice(0, -1).concat(index, 'radicand', 0);
+  }
+
+  if (newToken) {
+    ref.splice(index, 0, newToken);
+  } else {
+    // fallback: insert raw LaTeX token
+    ref.splice(index, 0, { type: 'latex', value: latexBuffer });
+    caretPath = caretPath.slice(0, -1).concat(index + 1);
+  }
+
   latexBuffer = null;
-  caretPath = caretPath.slice(0, -1).concat(index + 1);
   return true;
 }
 
