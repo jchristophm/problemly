@@ -503,9 +503,10 @@ function insertEquation() {
 }
 
 // Add this right after insertEquation()
-document.addEventListener('keydown', (e) => {
+window.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     insertEquation();
   }
 });
+
