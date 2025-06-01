@@ -34,7 +34,11 @@ function tokenToLatex(token) {
       return `${(token.base || []).map(tokenToLatex).join('')}_{${(token.sub || []).map(tokenToLatex).join('')}}`;
 
     case 'group':
-      return `\\left(${(token.tokens || []).map(tokenToLatex).join('')}\\right)`;
+      return `\\left(${(token.tokens || []).map((t, i, arr) => {
+        const prev = arr[i - 1];
+        const needsSpace = prev?.type === 'latex' && (t.type === 'char' || t.type === 'caret');
+        return (needsSpace ? ' ' : '') + tokenToLatex(t);
+      }).join('')}\\right)`;
 
     case 'caret':
       if (!latexBuffer) return '\\textcolor{gray}{|}';
