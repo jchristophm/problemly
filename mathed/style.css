@@ -9,7 +9,7 @@ body {
 }
 
 .editor-container {
-  background: white;
+  background: #f5f5f5; /* match diagram editor */
   border-radius: 10px;
   padding: 1rem;
   box-shadow: 0 0 15px rgba(0,0,0,0.1);
@@ -22,7 +22,7 @@ body {
   min-height: 60px;
   font-size: 1.25rem;
   padding: 0.75rem;
-  border: 1px solid #ccc;
+  border: 1px solid #bbb;
   border-radius: 6px;
   background: #fff;
   outline: none;
@@ -53,21 +53,24 @@ body {
 
 /* === Equation Editor Buttons === */
 .mq-btn {
-  background-color: #f0f0f0;
+  background-color: white;
   border: 1px solid #ccc;
   border-radius: 6px;
   padding: 6px 12px;
   font-size: 20px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .mq-btn:hover {
-  background-color: #e0e0e0;
+  background-color: #f0f0f0;
 }
 
 .mq-btn:active {
-  background-color: #d0d0d0;
+  background-color: #e0e0e0;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* === Layout for the control buttons row === */
@@ -94,10 +97,12 @@ body {
 .mq-toolbar-row {
   display: flex;
   justify-content: center;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
+  padding: 0.5rem 0;
+  background-color: white; /* matches your diagram editor */
+  border-radius: 8px;
   margin-bottom: 8px;
-  flex-wrap: wrap; /* Optional: wrap on narrow screens */
 }
 
 .math-editor-wrapper {
