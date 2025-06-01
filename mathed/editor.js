@@ -14,16 +14,35 @@ function resolvePath(path) {
 
 function tokenToLatex(token) {
   if (!token) return '';
+
   switch (token.type) {
     case 'latex':
-      try { katex.__parse(token.value); return token.value; }
-      catch { return `\\textcolor{red}{${token.value}}`; }
-    case 'frac': return `\\frac{${(token.left || []).map(tokenToLatex).join('')}}{${(token.right || []).map(tokenToLatex).join('')}}`;
-    case 'sup': return `${(token.base || []).map(tokenToLatex).join('')}^{${(token.exponent || []).map(tokenToLatex).join('')}}`;
-    case 'sub': return `${(token.base || []).map(tokenToLatex).join('')}_{${(token.sub || []).map(tokenToLatex).join('')}}`;
-    case 'group': return `\\left(${(token.tokens || []).map(tokenToLatex).join('')}\\right)`;
-    case 'caret': return '\\textcolor{gray}{|}';
-    case 'char': default: return token.latex || '';
+      try {
+        katex.__parse(token.value);
+        return token.value;
+      } catch {
+        return `\\textcolor{red}{${token.value}}`;
+      }
+
+    case 'frac':
+      return `\\frac{${(token.left || []).map(tokenToLatex).join('')}}{${(token.right || []).map(tokenToLatex).join('')}}`;
+
+    case 'sup':
+      return `${(token.base || []).map(tokenToLatex).join('')}^{${(token.exponent || []).map(tokenToLatex).join('')}}`;
+
+    case 'sub':
+      return `${(token.base || []).map(tokenToLatex).join('')}_{${(token.sub || []).map(tokenToLatex).join('')}}`;
+
+    case 'group':
+      return `\\left(${(token.tokens || []).map(tokenToLatex).join('')}\\right)`;
+
+    case 'caret':
+      return latexBuffer ? `\\textcolor{gray}{${latexBuffer}}` : `\\textcolor{gray}{|}`;
+
+    case 'char':
+    default:
+      return token.latex || '';
+
     case 'root':
       if (token.index && token.index.length > 0) {
         return `\\sqrt[${token.index.map(tokenToLatex).join('')}]{${
@@ -32,9 +51,8 @@ function tokenToLatex(token) {
       } else {
         return `\\sqrt{${token.radicand.map(tokenToLatex).join('')}}`;
       }
-    case 'func': return `\\${token.name}\\left(${(token.arg || []).map(tokenToLatex).join('')}\\right)`;
+    case 'func':return `\\${token.name}\\left(${(token.arg || []).map(tokenToLatex).join('')}\\right)`;
     case 'accent': return `\\${token.accent}{${(token.arg || []).map(tokenToLatex).join('')}}`;
-    case 'latex-preview': return `\\textcolor{gray}{${token.value}}`;
   }
 }
 
