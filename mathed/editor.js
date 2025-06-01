@@ -91,11 +91,15 @@ function tokenToLatex(token) {
       }
 
     case 'func':
+     if (token.name === 'text') {
+       return `\\text{${(token.arg || []).map(tokenToLatex).join('')}}`;
+     } else {
       return `\\${token.name}\\left(${(token.arg || []).map((t, i, arr) => {
         const prev = arr[i - 1];
-        const needsSpace = prev?.type === 'latex' && (t.type === 'char' || t.type === 'caret');
-        return (needsSpace ? ' ' : '') + tokenToLatex(t);
+         const needsSpace = prev?.type === 'latex' && (t.type === 'char' || t.type === 'caret');
+         return (needsSpace ? ' ' : '') + tokenToLatex(t);
       }).join('')}\\right)`;
+    }
 
     case 'accent':
       return `\\${token.accent}{${(token.arg || []).map((t, i, arr) => {
