@@ -320,10 +320,14 @@ function commitLatexBuffer() {
   if (newToken) {
     ref.splice(index, 0, newToken);
   } else {
-    // fallback: insert raw LaTeX token
-    ref.splice(index, 0, { type: 'latex', value: `${latexBuffer}{}` });
-    caretPath = caretPath.slice(0, -1).concat(index + 1);
+    // fallback: insert raw LaTeX + dummy to prevent glue-on (\pi e → \pie)
+    ref.splice(index, 0,
+      { type: 'latex', value: `${latexBuffer}` },   // ← keep latex, no {}
+      { type: 'char', latex: '' }                   // ← dummy buffer absorber
+    );
+    caretPath = caretPath.slice(0, -1).concat(index + 1); // land on dummy
   }
+
 
   latexBuffer = null;
   return true;
