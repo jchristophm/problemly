@@ -91,10 +91,10 @@ body {
 /* === Toolbar rows for Greek + function buttons === */
 .mq-toolbar-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
   justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
 }
+
 
 
