@@ -132,6 +132,8 @@ function insertChar(char) {
     }
   }
 
+  const { ref, index } = resolvePath(caretPath);
+
   if (char === '\\') {
     latexBuffer = '\\';
     render(); return;
