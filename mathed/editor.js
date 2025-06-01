@@ -65,8 +65,9 @@ function tokenToLatex(token) {
     case 'func':return `\\${token.name}\\left(${(token.arg || []).map(tokenToLatex).join('')}\\right)`;
     case 'accent': return `\\${token.accent}{${(token.arg || []).map(tokenToLatex).join('')}}`;
     case 'latex-preview':
-      return `\\textcolor{gray}{${token.value}}`;
-
+      // Escape leading backslash so KaTeX doesn't try to parse it
+      const escaped = token.value.replace(/\\/g, '\\textbackslash ');
+      return `\\textcolor{gray}{\\texttt{${escaped}}}`;
   }
 }
 
