@@ -99,15 +99,21 @@ function insertChar(char) {
 
   if (fnNames.includes(recent)) {
     const { ref, index } = resolvePath(caretPath);
+    const insertAt = index - 3;
 
-    // Remove last 3 individual chars
-    ref.splice(index - 3, 3);
+    if (insertAt < 0) {
+      console.warn("Cannot insert function — not enough tokens before caret.");
+      return;
+    }
 
-    // Insert structured function node
+    // Remove 's', 'i', 'n' chars
+    ref.splice(insertAt, 3);
+
+    // Insert structured function
     const funcToken = { type: 'func', name: recent, arg: [] };
-    ref.splice(index - 3, 0, funcToken);
+    ref.splice(insertAt, 0, funcToken);
 
-    caretPath = caretPath.slice(0, -1).concat(index - 3, 'arg', 0);
+    caretPath = caretPath.slice(0, -1).concat(insertAt, 'arg', 0);
     render();
     return;
   }
