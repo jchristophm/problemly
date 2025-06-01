@@ -25,13 +25,29 @@ function tokenToLatex(token) {
       }
 
     case 'frac':
-      return `\\frac{${(token.left || []).map(tokenToLatex).join('')}}{${(token.right || []).map(tokenToLatex).join('')}}`;
+      return `\\frac{${(token.left || []).map((t, i, arr) => {
+        const prev = arr[i - 1];
+        const needsSpace = prev?.type === 'latex' && (t.type === 'char' || t.type === 'caret');
+        return (needsSpace ? ' ' : '') + tokenToLatex(t);
+      }).join('')}}{${(token.right || []).map((t, i, arr) => {
+        const prev = arr[i - 1];
+        const needsSpace = prev?.type === 'latex' && (t.type === 'char' || t.type === 'caret');
+        return (needsSpace ? ' ' : '') + tokenToLatex(t);
+      }).join('')}}`;
 
     case 'sup':
-      return `${(token.base || []).map(tokenToLatex).join('')}^{${(token.exponent || []).map(tokenToLatex).join('')}}`;
+      return `${(token.base || []).map(tokenToLatex).join('')}^{${(token.exponent || []).map((t, i, arr) => {
+        const prev = arr[i - 1];
+        const needsSpace = prev?.type === 'latex' && (t.type === 'char' || t.type === 'caret');
+        return (needsSpace ? ' ' : '') + tokenToLatex(t);
+      }).join('')}}`;
 
     case 'sub':
-      return `${(token.base || []).map(tokenToLatex).join('')}_{${(token.sub || []).map(tokenToLatex).join('')}}`;
+      return `${(token.base || []).map(tokenToLatex).join('')}_{${(token.sub || []).map((t, i, arr) => {
+        const prev = arr[i - 1];
+        const needsSpace = prev?.type === 'latex' && (t.type === 'char' || t.type === 'caret');
+        return (needsSpace ? ' ' : '') + tokenToLatex(t);
+      }).join('')}}`;
 
     case 'group':
       return `\\left(${(token.tokens || []).map((t, i, arr) => {
@@ -44,15 +60,10 @@ function tokenToLatex(token) {
       if (!latexBuffer) return '\\textcolor{gray}{|}';
 
       const raw = latexBuffer.trim();
-
-      // Only show ghost if it’s something like \a, \mu, etc.
       const match = raw.match(/^\\[a-zA-Z]{1,}$/);
-
-      if (match) {
-        return `\\textcolor{gray}{${raw}}`;
-      } else {
-        return `\\textcolor{gray}{|}`;
-      }
+      return match
+        ? `\\textcolor{gray}{${raw}}`
+        : `\\textcolor{gray}{|}`;
 
     case 'char':
     default:
@@ -60,11 +71,23 @@ function tokenToLatex(token) {
 
     case 'root':
       if (token.index && token.index.length > 0) {
-        return `\\sqrt[${token.index.map(tokenToLatex).join('')}]{${
-          token.radicand.map(tokenToLatex).join('')
+        return `\\sqrt[${token.index.map((t, i, arr) => {
+          const prev = arr[i - 1];
+          const needsSpace = prev?.type === 'latex' && (t.type === 'char' || t.type === 'caret');
+          return (needsSpace ? ' ' : '') + tokenToLatex(t);
+        }).join('')}]{${
+          token.radicand.map((t, i, arr) => {
+            const prev = arr[i - 1];
+            const needsSpace = prev?.type === 'latex' && (t.type === 'char' || t.type === 'caret');
+            return (needsSpace ? ' ' : '') + tokenToLatex(t);
+          }).join('')
         }}`;
       } else {
-        return `\\sqrt{${token.radicand.map(tokenToLatex).join('')}}`;
+        return `\\sqrt{${token.radicand.map((t, i, arr) => {
+          const prev = arr[i - 1];
+          const needsSpace = prev?.type === 'latex' && (t.type === 'char' || t.type === 'caret');
+          return (needsSpace ? ' ' : '') + tokenToLatex(t);
+        }).join('')}}`;
       }
 
     case 'func':
@@ -82,7 +105,6 @@ function tokenToLatex(token) {
       }).join('')}}`;
 
     case 'latex-preview':
-      // Escape leading backslash so KaTeX doesn't try to parse it
       const escaped = token.value.replace(/\\/g, '\\textbackslash ');
       return `\\textcolor{gray}{\\texttt{${escaped}}}`;
   }
