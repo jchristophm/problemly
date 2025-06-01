@@ -129,27 +129,17 @@ function insertChar(char) {
           caretPath[caretPath.length - 1]++;
         }
 
-  latexBuffer = null;
-  render();
-  return;
-} else {
-  console.warn('[Fallback] Unknown LaTeX command:', command);
-  ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-  caretPath[caretPath.length - 1]++;
-  latexBuffer = null;
-  render();
-  return;
-}
-
-      latexBuffer = null;
-      render();
-      return;
-    } else {
-      latexBuffer += char;
-      render();
-      return;
-    }
-  }
+        latexBuffer = null;
+        render();
+        return;
+      } else {
+        console.warn('[Fallback] Unknown LaTeX command:', command);
+        ref.splice(index, 0, { type: 'latex', value: latexBuffer });
+        caretPath[caretPath.length - 1]++;
+        latexBuffer = null;
+        render();
+        return;
+      }
 
   // Handle structure characters
   if (char === '^') {
