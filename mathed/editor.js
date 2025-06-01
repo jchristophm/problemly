@@ -32,7 +32,7 @@ function tokenToLatex(token) {
       } else {
         return `\\sqrt{${token.radicand.map(tokenToLatex).join('')}}`;
       }
-
+    case 'func': return `\\${token.name}\\left(${(token.arg || []).map(tokenToLatex).join('')}\\right)`;
   }
 }
 
@@ -86,7 +86,32 @@ function render() {
   }
 }
 
+function getRecentChars(latestChar, lookback = 3) {
+  const { ref, index } = resolvePath(caretPath);
+  const prefix = ref.slice(Math.max(0, index - lookback), index).map(t => t?.latex || '').join('');
+  return (prefix + latestChar).toLowerCase();
+}
+
 function insertChar(char) {
+  // --- FUNCTION TRIGGERS: sin, cos, tan ---
+  const recent = getRecentChars(char, 3); // Helper function defined below
+  const fnNames = ['sin', 'cos', 'tan'];
+
+  if (fnNames.includes(recent)) {
+    const { ref, index } = resolvePath(caretPath);
+
+    // Remove last 3 individual chars
+    ref.splice(index - 3, 3);
+
+    // Insert structured function node
+    const funcToken = { type: 'func', name: recent, arg: [] };
+    ref.splice(index - 3, 0, funcToken);
+
+    caretPath = caretPath.slice(0, -1).concat(index - 3, 'arg', 0);
+    render();
+    return;
+  }
+  
   const { ref, index } = resolvePath(caretPath);
   if (char === '\\') {
     latexBuffer = '\\';
