@@ -88,21 +88,20 @@ function render() {
 }
 
 function insertChar(char) {
-  const flatTokens = tokens;
-  const flatIndex = caretPath[0];
+  const { ref, index } = resolvePath(caretPath);
 
   typedBuffer += char;
   if (typedBuffer.length > 10) typedBuffer = typedBuffer.slice(-10);
 
   const match = typedBuffer.match(/(sin|cos|tan|log|ln|vec|hat|bar|dot|sqrt)$/);
-  if (match && caretPath.length === 1) {  // ensure flat caret
+  if (match && Array.isArray(ref)) {
     const name = match[1];
-    const start = flatIndex - name.length;
+    const start = index - name.length;
 
     if (start >= 0) {
       let valid = true;
       for (let i = 0; i < name.length; i++) {
-        const t = flatTokens[start + i];
+        const t = ref[start + i];
         if (!t || t.type !== 'char' || t.latex !== name[i]) {
           valid = false;
           break;
@@ -110,21 +109,21 @@ function insertChar(char) {
       }
 
       if (valid) {
-        flatTokens.splice(start, name.length);
+        ref.splice(start, name.length);
 
         let newToken;
         if (['sin', 'cos', 'tan', 'log', 'ln'].includes(name)) {
           newToken = { type: 'func', name, arg: [] };
-          caretPath = [start, 'arg', 0];
+          caretPath = caretPath.slice(0, -1).concat(start, 'arg', 0);
         } else if (['vec', 'hat', 'bar', 'dot'].includes(name)) {
           newToken = { type: 'accent', accent: name, arg: [] };
-          caretPath = [start, 'arg', 0];
+          caretPath = caretPath.slice(0, -1).concat(start, 'arg', 0);
         } else if (name === 'sqrt') {
           newToken = { type: 'root', radicand: [] };
-          caretPath = [start, 'radicand', 0];
+          caretPath = caretPath.slice(0, -1).concat(start, 'radicand', 0);
         }
 
-        flatTokens.splice(start, 0, newToken);
+        ref.splice(start, 0, newToken);
         typedBuffer = '';
         render();
         return;
