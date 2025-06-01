@@ -298,6 +298,14 @@ renderedField.addEventListener('click', () => ghostInput.focus());
 ghostInput.addEventListener('input', e => {
   const val = ghostInput.value;
   ghostInput.value = '';
+
+  if (val === ' ') {
+    const committed = commitLatexBuffer();
+    if (!committed) moveCaret(1); // Advance caret if nothing to commit
+    render();
+    return;
+  }
+
   if (val) insertChar(val);
 });
 
