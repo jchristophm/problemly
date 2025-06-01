@@ -470,3 +470,13 @@ window.addEventListener('DOMContentLoaded', () => {
   ghostInput.focus();
   render();
 });
+
+document.querySelectorAll('.mq-btn[data-latex]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const latex = btn.getAttribute('data-latex');
+    for (const char of latex) {
+      insertChar(char);
+    }
+  });
+});
+
