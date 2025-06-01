@@ -10,11 +10,39 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!-- Greek Letters Row -->
+<div class="mq-toolbar-row">
+  <button class="mq-btn" data-latex="\\theta">θ</button>
+  <button class="mq-btn" data-latex="\\pi">π</button>
+  <button class="mq-btn" data-latex="\\mu">μ</button>
+  <button class="mq-btn" data-latex="\\rho">ρ</button>
+  <button class="mq-btn" data-latex="\\Delta">Δ</button>
+</div>
+
+<!-- Structural and Functional Constructs -->
+<div class="mq-toolbar-row">
+  <button class="mq-btn" data-latex="\\sqrt">√</button>
+  <button class="mq-btn" data-latex="\\sin">sin</button>
+  <button class="mq-btn" data-latex="\\cos">cos</button>
+  <button class="mq-btn" data-latex="\\tan">tan</button>
+  <button class="mq-btn" data-latex="\\vec">𝐯⃗</button>
+  <button class="mq-btn" data-latex="\\hat">ẑ</button>
+  <!-- <button class="mq-btn" data-insert="subsup">xₐ²</button> -->
+  <button class="mq-btn" data-latex="\\int">∫</button>
+</div>
+
   <div class="editor-container">
-    <h2>MiniMathEditor</h2>
     <div id="renderedField" tabindex="0"></div>
     <input id="ghostInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
   </div>
+
+  <!-- Equation Controls -->
+<div class="mq-controls" style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 12px;">
+  <button class="mq-btn mq-mobile-only" onclick="moveCaret(-1)">←</button>
+  <button class="mq-btn" onclick="insertEquation()">Insert Equation</button>
+  <button class="mq-btn mq-mobile-only" onclick="moveCaret(1)">→</button>
+</div>
+
   <script src="editor.js"></script>
 </body>
 </html>
