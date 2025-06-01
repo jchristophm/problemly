@@ -177,6 +177,13 @@ function insertChar(char) {
     }
   }
 
+  // If we're about to insert and the caret is right after a latex token,
+  // advance to ensure we don't append into the same structure
+  const before = resolvePath(caretPath.slice(0, -1).concat(caretPath[caretPath.length - 1] - 1));
+  if (before.ref?.[before.index]?.type === 'latex') {
+    caretPath[caretPath.length - 1]++;
+  }
+
   // Everything else needs resolved ref
   const { ref, index } = resolvePath(caretPath);
 
