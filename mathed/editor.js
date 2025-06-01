@@ -426,7 +426,18 @@ ghostInput.addEventListener('input', e => {
 
   if (val === ' ') {
     const committed = commitLatexBuffer();
-    if (!committed) moveCaret(1); // Advance caret if nothing to commit
+
+    const { ref, index } = resolvePath(caretPath);
+    const token = ref[index];
+
+    // 🧠 If we’re sitting on a dummy char, move past it
+    if (token?.type === 'char' && token.latex === '') {
+      moveCaret(1);
+      render();
+      return;
+    }
+
+    if (!committed) moveCaret(1);
     render();
     return;
   }
