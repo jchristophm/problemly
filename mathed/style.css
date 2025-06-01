@@ -1,0 +1,50 @@
+body {
+  font-family: sans-serif;
+  background: #f7f7f7;
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.editor-container {
+  background: white;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 600px;
+  position: relative;
+}
+
+#renderedField {
+  min-height: 60px;
+  font-size: 1.25rem;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  outline: none;
+  white-space: nowrap;
+  cursor: text;
+  position: relative;
+}
+
+#ghostInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.caret-blink::after {
+  content: '|';
+  color: gray;
+  font-weight: normal;
+  animation: blink 1s steps(2, start) infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
