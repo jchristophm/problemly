@@ -116,8 +116,10 @@ function insertChar(char) {
       }
 
       if (newToken) {
+        console.log('[Insert] Structured token:', newToken);
         ref.splice(index, 0, newToken);
       } else {
+        console.warn('[Fallback] Unknown LaTeX command:', command);
         ref.splice(index, 0, { type: 'latex', value: latexBuffer });
         caretPath[caretPath.length - 1]++;
       }
