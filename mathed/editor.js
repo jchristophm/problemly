@@ -94,28 +94,26 @@ function getRecentChars(latestChar, lookback = 3) {
 
 function insertChar(char) {
   // --- FUNCTION TRIGGERS: sin, cos, tan ---
-  const recent = getRecentChars(char, 3); // Helper function defined below
   const fnNames = ['sin', 'cos', 'tan'];
+  if (tokens.length >= 3) {
+    const recent = getRecentChars(char, 3);
+    if (fnNames.includes(recent)) {
+      const { ref, index } = resolvePath(caretPath);
+      const insertAt = index - 3;
 
-  if (fnNames.includes(recent)) {
-    const { ref, index } = resolvePath(caretPath);
-    const insertAt = index - 3;
+      // Extra guard to be safe
+      if (insertAt < 0 || ref.length < 3) {
+        console.warn("Function insertion skipped: not enough tokens before caret.");
+        return;
+      }
 
-    if (insertAt < 0) {
-      console.warn("Cannot insert function — not enough tokens before caret.");
+      ref.splice(insertAt, 3);
+      const funcToken = { type: 'func', name: recent, arg: [] };
+      ref.splice(insertAt, 0, funcToken);
+      caretPath = caretPath.slice(0, -1).concat(insertAt, 'arg', 0);
+      render();
       return;
     }
-
-    // Remove 's', 'i', 'n' chars
-    ref.splice(insertAt, 3);
-
-    // Insert structured function
-    const funcToken = { type: 'func', name: recent, arg: [] };
-    ref.splice(insertAt, 0, funcToken);
-
-    caretPath = caretPath.slice(0, -1).concat(insertAt, 'arg', 0);
-    render();
-    return;
   }
   
   const { ref, index } = resolvePath(caretPath);
