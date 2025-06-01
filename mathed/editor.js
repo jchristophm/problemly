@@ -474,9 +474,27 @@ window.addEventListener('DOMContentLoaded', () => {
 document.querySelectorAll('.mq-btn[data-latex]').forEach(btn => {
   btn.addEventListener('click', () => {
     const latex = btn.getAttribute('data-latex');
+    
+    // Feed each character into insertChar
     for (const char of latex) {
       insertChar(char);
     }
+
+    // Commit the buffer like pressing space
+    const committed = commitLatexBuffer();
+
+    // Optional: if sitting on dummy char, skip it
+    const { ref, index } = resolvePath(caretPath);
+    const token = ref[index];
+    if (token?.type === 'char' && token.latex === '') {
+      moveCaret(1);
+    }
+
+    render();
+
+    // Refocus the hidden input so keyboard stays active
+    ghostInput.focus();
   });
 });
+
 
