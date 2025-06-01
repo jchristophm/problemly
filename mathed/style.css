@@ -10,16 +10,11 @@ body {
 
 /* Wrap the entire math editor in this container */
 .math-editor-wrapper {
-  background: white;
+  background: #f3f3f3;
+  padding: 1rem;
   border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 0 24px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 700px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+  margin-top: 1rem;
 }
 
 .editor-container {
@@ -67,24 +62,22 @@ body {
 
 /* === Equation Editor Buttons === */
 .mq-btn {
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 20px;
-  font-weight: 500;
+  background-color: #eaeaea;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 1rem;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  transition: background-color 0.2s ease;
 }
 
 .mq-btn:hover {
-  background-color: #f0f0f0;
+  background-color: #dcdcdc;
 }
 
 .mq-btn:active {
-  background-color: #e0e0e0;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  background-color: #cccccc;
 }
 
 /* === Layout for the control buttons row === */
@@ -108,15 +101,15 @@ body {
 }
 
 /* === Toolbar rows for Greek + function buttons === */
-.mq-toolbar-row {
+.mq-toolbar-row,
+.mq-controls {
+  background-color: white;
+  padding: 8px 0;
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 0.5rem 0;
-  background-color: white; /* matches your diagram editor */
-  border-radius: 8px;
-  margin-bottom: 8px;
+  gap: 10px;
+  border-radius: 12px;
 }
 
 .math-editor-wrapper {
