@@ -37,7 +37,9 @@ function tokenToLatex(token) {
       return `\\left(${(token.tokens || []).map(tokenToLatex).join('')}\\right)`;
 
     case 'caret':
-      return latexBuffer ? `\\textcolor{gray}{${latexBuffer}}` : `\\textcolor{gray}{|}`;
+      return latexBuffer && latexBuffer.length > 1
+        ? `\\textcolor{gray}{${latexBuffer}}`
+        : `\\textcolor{gray}{|}`;
 
     case 'char':
     default:
