@@ -102,18 +102,6 @@ function render() {
   } catch {
     renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
   }
-
-  if (latexBuffer && latexBuffer.length > 0) {
-    const ghost = document.createElement('span');
-    ghost.style.color = 'gray';
-    ghost.style.fontFamily = 'monospace';
-    ghost.style.marginLeft = '4px';
-    ghost.textContent = latexBuffer;
-    const caret = document.createElement('span');
-    caret.className = 'caret-blink';
-    renderedField.appendChild(ghost);
-    renderedField.appendChild(caret);
-  }
 }
 
 function insertChar(char) {
