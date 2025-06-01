@@ -501,3 +501,11 @@ function insertEquation() {
   const latex = tokens.map(tokenToLatex).join('');
   window.parent.postMessage({ type: 'mathed-submit', latex }, '*');
 }
+
+// Add this right after insertEquation()
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    insertEquation();
+  }
+});
