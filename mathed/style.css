@@ -1,11 +1,13 @@
 /* Light gray app background */
 body {
-  background: #f0f0f0;
+  background: white;
+  padding: 1rem;
   margin: 0;
   font-family: sans-serif;
   display: flex;
-  justify-content: center;
-  padding: 2rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
 }
 
 .editor-outer-wrapper {
@@ -14,9 +16,7 @@ body {
   align-items: center;
   gap: 1.25rem;
   background: white;
-  padding: 1.5rem;
-  border-radius: 16px;
-  box-shadow: 0 0 18px rgba(0, 0, 0, 0.08);
+  padding: 1rem;
 }
 
 /* Wrap the entire math editor in this container */
