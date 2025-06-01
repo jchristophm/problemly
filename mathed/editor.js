@@ -157,7 +157,14 @@ function insertChar(char) {
         ref.splice(index, 0, newToken);
       } else {
         ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-        caretPath = caretPath.slice(0, -1).concat(index + 1);
+
+        // Make sure the caret moves one slot after the inserted token
+        // and NEVER accidentally appends to it
+        if (ref.length > index + 1) {
+          caretPath = caretPath.slice(0, -1).concat(index + 1);
+        } else {
+          caretPath = caretPath.slice(0, -1).concat(ref.length);
+        }
       }
 
       latexBuffer = null;
@@ -269,7 +276,14 @@ function commitLatexBuffer() {
   } else {
     // fallback: insert raw LaTeX token
     ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-    caretPath = caretPath.slice(0, -1).concat(index + 1);
+
+    // Make sure the caret moves one slot after the inserted token
+    // and NEVER accidentally appends to it
+    if (ref.length > index + 1) {
+      caretPath = caretPath.slice(0, -1).concat(index + 1);
+    } else {
+      caretPath = caretPath.slice(0, -1).concat(ref.length);
+    }
   }
 
   latexBuffer = null;
