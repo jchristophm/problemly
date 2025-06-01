@@ -365,17 +365,22 @@ function moveCaret(dir) {
   const diveIdx = dir > 0 ? index : index - 1;
   const diveToken = ref[diveIdx];
   const divePath = diveIntoStructure(diveToken, path.slice(0, -1).concat(diveIdx), dir);
+
   if (divePath) {
     caretPath = divePath;
-    render(); return;
+    render();
+    return;
   }
 
   const newIndex = index + dir;
   if (newIndex >= 0 && newIndex <= ref.length) {
     caretPath = path.slice(0, -1).concat(newIndex);
-    render(); return;
+    render();
+    return;
   }
 
+  // If we reach here, we're at the boundary of the current array.
+  // Try to move OUT of the container.
   for (let i = path.length - 2; i >= 0; i -= 2) {
     const parentPath = path.slice(0, i);
     const { ref: pRef, index: pIdx } = resolvePath(parentPath);
@@ -384,7 +389,10 @@ function moveCaret(dir) {
       frac: ['left', 'right'],
       sup: ['base', 'exponent'],
       sub: ['base', 'sub'],
-      group: ['tokens']
+      group: ['tokens'],
+      root: ['index', 'radicand'],
+      func: ['arg'],
+      accent: ['arg']
     };
     const container = pRef[pIdx];
     if (container?.type && siblings[container.type]) {
@@ -393,13 +401,16 @@ function moveCaret(dir) {
       const targetField = fields[fieldIdx + dir];
       if (targetField && Array.isArray(container[targetField])) {
         caretPath = parentPath.concat(targetField, dir > 0 ? 0 : container[targetField].length);
-        render(); return;
+        render();
+        return;
       }
     }
 
+    // Final fallback: move to next sibling at parent level
     if ((dir < 0 && index === 0) || (dir > 0 && index === ref.length)) {
       caretPath = parentPath.slice(0, -1).concat(dir > 0 ? pIdx + 1 : pIdx);
-      render(); return;
+      render();
+      return;
     }
   }
 }
