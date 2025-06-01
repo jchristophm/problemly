@@ -1,3 +1,4 @@
+// push render
 const renderedField = document.getElementById('renderedField');
 const ghostInput = document.getElementById('ghostInput');
 
