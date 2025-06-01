@@ -42,14 +42,15 @@ function renderTokensWithCaret(tokens, path) {
   const deepCopy = JSON.parse(JSON.stringify(tokens));
   let ref = deepCopy;
   for (let i = 0; i < path.length - 1; i++) ref = ref[path[i]];
-  if (latexBuffer) {
+  if (latexBuffer && latexBuffer.length > 1) {
     ref.splice(path[path.length - 1], 0, {
       type: 'latex-preview',
       value: latexBuffer
     });
   } else {
-    ref.splice(path[path.length - 1], 0, { type: 'caret' });
-  }
+  ref.splice(path[path.length - 1], 0, { type: 'caret' });
+}
+
   return deepCopy;
 }
 
