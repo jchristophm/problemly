@@ -1,10 +1,24 @@
+/* Light gray app background */
 body {
+  background: #f0f0f0;
+  margin: 0;
   font-family: sans-serif;
-  background: white;
+  display: flex;
+  justify-content: center;
   padding: 2rem;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
+}
+
+/* Wrap the entire math editor in this container */
+.math-editor-wrapper {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 1rem;
 }
 
