@@ -252,4 +252,8 @@ ghostInput.addEventListener('keydown', e => {
 });
 
 renderedField.addEventListener('focus', () => ghostInput.focus());
-window.addEventListener('DOMContentLoaded', () => ghostInput.focus());
+window.addEventListener('DOMContentLoaded', () => {
+  ghostInput.focus();
+  render(); // <- Add this line
+});
+
