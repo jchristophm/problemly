@@ -1,4 +1,3 @@
-// push render wtf
 const renderedField = document.getElementById('renderedField');
 const ghostInput = document.getElementById('ghostInput');
 
@@ -34,6 +33,7 @@ function tokenToLatex(token) {
         return `\\sqrt{${token.radicand.map(tokenToLatex).join('')}}`;
       }
     case 'func': return `\\${token.name}\\left(${(token.arg || []).map(tokenToLatex).join('')}\\right)`;
+    case 'accent': return `\\${token.accent}{${(token.arg || []).map(tokenToLatex).join('')}}`;
   }
 }
 
@@ -87,39 +87,11 @@ function render() {
   }
 }
 
-function getRecentChars(latestChar, lookback = 3) {
-  const { ref, index } = resolvePath(caretPath);
-  const prefix = ref.slice(Math.max(0, index - lookback), index).map(t => t?.latex || '').join('');
-  return (prefix + latestChar).toLowerCase();
-}
-
 function insertChar(char) {
-  // --- FUNCTION TRIGGERS: sin, cos, tan ---
-  const fnNames = ['sin', 'cos', 'tan'];
-  if (tokens.length >= 3) {
-    const recent = getRecentChars(char, 3);
-    if (fnNames.includes(recent)) {
-      const { ref, index } = resolvePath(caretPath);
-      const insertAt = index - 3;
-
-      // Extra guard to be safe
-      if (insertAt < 0 || ref.length < 3) {
-        console.warn("Function insertion skipped: not enough tokens before caret.");
-        return;
-      }
-
-      ref.splice(insertAt, 3);
-      const funcToken = { type: 'func', name: recent, arg: [] };
-      ref.splice(insertAt, 0, funcToken);
-      caretPath = caretPath.slice(0, -1).concat(insertAt, 'arg', 0);
-      render();
-      return;
-    }
-  }
-  
   const { ref, index } = resolvePath(caretPath);
+
   typedBuffer += char;
-  if (typedBuffer.length > 10) typedBuffer = typedBuffer.slice(-10); // limit buffer size
+  if (typedBuffer.length > 10) typedBuffer = typedBuffer.slice(-10);
 
   const match = typedBuffer.match(/(sin|cos|tan|log|ln|vec|hat|bar|dot|sqrt)$/);
   if (match) {
@@ -137,35 +109,36 @@ function insertChar(char) {
         }
       }
 
-    if (valid) {
-      ref.splice(start, removeCount); // remove matched chars
+      if (valid) {
+        ref.splice(start, removeCount);
 
-      let newToken;
-      if (['sin', 'cos', 'tan', 'log', 'ln'].includes(name)) {
-        newToken = { type: 'func', name, arg: [] };
-        caretPath = caretPath.slice(0, -1).concat(start, 'arg', 0);
-      } else if (['vec', 'hat', 'bar', 'dot'].includes(name)) {
-        newToken = { type: 'accent', accent: name, arg: [] };
-        caretPath = caretPath.slice(0, -1).concat(start, 'arg', 0);
-      } else if (name === 'sqrt') {
-        newToken = { type: 'root', radicand: [] };
-        caretPath = caretPath.slice(0, -1).concat(start, 'radicand', 0);
-      }
+        let newToken;
+        if (['sin', 'cos', 'tan', 'log', 'ln'].includes(name)) {
+          newToken = { type: 'func', name, arg: [] };
+          caretPath = caretPath.slice(0, -1).concat(start, 'arg', 0);
+        } else if (['vec', 'hat', 'bar', 'dot'].includes(name)) {
+          newToken = { type: 'accent', accent: name, arg: [] };
+          caretPath = caretPath.slice(0, -1).concat(start, 'arg', 0);
+        } else if (name === 'sqrt') {
+          newToken = { type: 'root', radicand: [] };
+          caretPath = caretPath.slice(0, -1).concat(start, 'radicand', 0);
+        }
 
-      if (newToken) {
-        ref.splice(start, 0, newToken);
-        typedBuffer = '';
-        render();
-        return;
+        if (newToken) {
+          ref.splice(start, 0, newToken);
+          typedBuffer = '';
+          render();
+          return;
+        }
       }
     }
   }
-}
 
   if (char === '\\') {
     latexBuffer = '\\';
     render(); return;
   }
+
   if (latexBuffer !== null && latexBuffer.length > 0) {
     if (char === ' ') {
       ref.splice(index, 0, { type: 'latex', value: latexBuffer });
@@ -185,6 +158,7 @@ function insertChar(char) {
     caretPath = caretPath.slice(0, -1).concat(index - 1, 'exponent', 0);
     render(); return;
   }
+
   if (char === '_') {
     const base = ref.splice(index - 1, 1);
     const sub = { type: 'sub', base, sub: [] };
@@ -192,6 +166,7 @@ function insertChar(char) {
     caretPath = caretPath.slice(0, -1).concat(index - 1, 'sub', 0);
     render(); return;
   }
+
   if (char === '/') {
     const left = ref.splice(index - 1, 1);
     const frac = { type: 'frac', left, right: [] };
@@ -199,12 +174,14 @@ function insertChar(char) {
     caretPath = caretPath.slice(0, -1).concat(index - 1, 'right', 0);
     render(); return;
   }
+
   if (char === '(') {
     const group = { type: 'group', tokens: [] };
     ref.splice(index, 0, group);
     caretPath = caretPath.slice(0, -1).concat(index, 'tokens', 0);
     render(); return;
   }
+
   if (char === ')') {
     const groupIndex = caretPath.lastIndexOf('tokens');
     if (groupIndex !== -1) {
@@ -212,11 +189,12 @@ function insertChar(char) {
       render(); return;
     }
   }
+
   if (char === '#') {
     const root = { type: 'root', radicand: [] };
     ref.splice(index, 0, root);
-      caretPath = caretPath.slice(0, -1).concat(index, 'radicand', 0);
-      render(); return;
+    caretPath = caretPath.slice(0, -1).concat(index, 'radicand', 0);
+    render(); return;
   }
 
   ref.splice(index, 0, { type: 'char', latex: char });
@@ -254,7 +232,9 @@ function diveIntoStructure(token, path, dir) {
     sup: ['exponent'],
     sub: ['sub'],
     group: ['tokens'],
-    root: ['radicand']
+    root: ['radicand'],
+    func: ['arg'],
+    accent: ['arg']
   };
   const keys = fields[token.type];
   if (keys) {
@@ -348,6 +328,5 @@ ghostInput.addEventListener('keydown', e => {
 renderedField.addEventListener('focus', () => ghostInput.focus());
 window.addEventListener('DOMContentLoaded', () => {
   ghostInput.focus();
-  render(); // <- Add this line
+  render();
 });
-
