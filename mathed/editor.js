@@ -107,9 +107,6 @@ function tokenToLatex(token) {
     case 'latex-preview':
       const escaped = token.value.replace(/\\/g, '\\textbackslash ');
       return `\\textcolor{gray}{\\texttt{${escaped}}}`;
-
-    case 'text':
-      return `\\text{${token.content.map(tokenToLatex).join('')}}`;
   }
 }
 
@@ -184,7 +181,7 @@ function insertChar(char) {
       const command = match ? match[1] : null;
 
       let newToken = null;
-      if (['sin', 'cos', 'tan', 'log', 'ln'].includes(command)) {
+      if (['sin', 'cos', 'tan', 'log', 'ln', 'text'].includes(command)) {
         newToken = { type: 'func', name: command, arg: [] };
         caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
       } else if (['vec', 'hat', 'bar', 'dot'].includes(command)) {
@@ -309,7 +306,7 @@ function commitLatexBuffer() {
   const command = latexBuffer.trim().replace(/^\\/, '');
   let newToken = null;
 
-  if (['sin', 'cos', 'tan', 'log', 'ln'].includes(command)) {
+  if (['sin', 'cos', 'tan', 'log', 'ln', 'text'].includes(command)) {
     newToken = { type: 'func', name: command, arg: [] };
     caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
   } else if (['vec', 'hat', 'bar', 'dot'].includes(command)) {
@@ -318,11 +315,7 @@ function commitLatexBuffer() {
   } else if (command === 'sqrt') {
     newToken = { type: 'root', radicand: [] };
     caretPath = caretPath.slice(0, -1).concat(index, 'radicand', 0);
-  } else if (command === 'text') {
-    newToken = { type: 'text', content: [] };
-    ref.splice(index, 0, newToken);
-    caretPath = caretPath.slice(0, -1).concat(index, 'content', 0);
-  }
+  } 
 
   if (newToken) {
     ref.splice(index, 0, newToken);
