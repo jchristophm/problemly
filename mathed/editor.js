@@ -107,6 +107,9 @@ function tokenToLatex(token) {
     case 'latex-preview':
       const escaped = token.value.replace(/\\/g, '\\textbackslash ');
       return `\\textcolor{gray}{\\texttt{${escaped}}}`;
+
+    case 'text':
+      return `\\text{${(token.content || []).map(tokenToLatex).join('')}}`;
   }
 }
 
