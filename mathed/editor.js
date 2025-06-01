@@ -497,4 +497,7 @@ document.querySelectorAll('.mq-btn[data-latex]').forEach(btn => {
   });
 });
 
-
+function insertEquation() {
+  const latex = tokens.map(tokenToLatex).join('');
+  window.parent.postMessage({ type: 'mathed-submit', latex }, '*');
+}
