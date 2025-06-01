@@ -321,7 +321,7 @@ function commitLatexBuffer() {
     ref.splice(index, 0, newToken);
   } else {
     // fallback: insert raw LaTeX token
-    ref.splice(index, 0, { type: 'latex', value: latexBuffer });
+    ref.splice(index, 0, { type: 'latex', value: `${latexBuffer}{}` });
 
     // Make sure the caret moves one slot after the inserted token
     // and NEVER accidentally appends to it
