@@ -8,6 +8,17 @@ body {
   padding: 2rem;
 }
 
+.editor-outer-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.08);
+}
+
 /* Wrap the entire math editor in this container */
 .math-editor-wrapper {
   background: #f3f3f3;
