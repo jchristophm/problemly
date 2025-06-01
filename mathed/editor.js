@@ -131,9 +131,11 @@ function insertChar(char) {
     }
   }
 
+  // LaTeX entry mode
   if (char === '\\') {
     latexBuffer = '\\';
-    render(); return;
+    render();
+    return;
   }
 
   if (latexBuffer !== null && latexBuffer.length > 0) {
@@ -141,13 +143,16 @@ function insertChar(char) {
       ref.splice(index, 0, { type: 'latex', value: latexBuffer });
       caretPath[caretPath.length - 1]++;
       latexBuffer = null;
-      render(); return;
+      render();
+      return;
     } else {
       latexBuffer += char;
-      render(); return;
+      render();
+      return;
     }
   }
 
+  // Special structure insertions
   if (char === '^') {
     const base = ref.splice(index - 1, 1);
     const sup = { type: 'sup', base, exponent: [] };
@@ -194,6 +199,7 @@ function insertChar(char) {
     render(); return;
   }
 
+  // Default character insertion
   ref.splice(index, 0, { type: 'char', latex: char });
   caretPath[caretPath.length - 1]++;
   render();
