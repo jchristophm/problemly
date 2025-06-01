@@ -23,6 +23,7 @@ body {
 .math-editor-wrapper {
   background: #f3f3f3;
   padding: 1rem;
+  width: 100%;
   border-radius: 16px;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
   margin-top: 1rem;
