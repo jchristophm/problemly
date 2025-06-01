@@ -102,16 +102,17 @@ function insertChar(char) {
     if (char === ' ') {
       const command = latexBuffer.slice(1); // Remove backslash
       let newToken = null;
+      let newCaret = null;
 
       if (['sin', 'cos', 'tan', 'log', 'ln'].includes(command)) {
         newToken = { type: 'func', name: command, arg: [] };
-        caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
+        newCaret = caretPath.slice(0, -1).concat(index, 'arg', 0);
       } else if (['vec', 'hat', 'bar', 'dot'].includes(command)) {
         newToken = { type: 'accent', accent: command, arg: [] };
-        caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
+        newCaret = caretPath.slice(0, -1).concat(index, 'arg', 0);
       } else if (command === 'sqrt') {
         newToken = { type: 'root', radicand: [] };
-        caretPath = caretPath.slice(0, -1).concat(index, 'radicand', 0);
+        newCaret = caretPath.slice(0, -1).concat(index, 'radicand', 0);
       }
 
       if (newToken) {
