@@ -118,11 +118,28 @@ function insertChar(char) {
       if (newToken) {
         console.log('[Insert] Structured token:', newToken);
         ref.splice(index, 0, newToken);
-      } else {
-        console.warn('[Fallback] Unknown LaTeX command:', command);
-        ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-        caretPath[caretPath.length - 1]++;
-      }
+
+        if (newToken.type === 'func') {
+          caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
+        } else if (newToken.type === 'accent') {
+          caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
+        } else if (newToken.type === 'root') {
+          caretPath = caretPath.slice(0, -1).concat(index, 'radicand', 0);
+        } else {
+          caretPath[caretPath.length - 1]++;
+        }
+
+  latexBuffer = null;
+  render();
+  return;
+} else {
+  console.warn('[Fallback] Unknown LaTeX command:', command);
+  ref.splice(index, 0, { type: 'latex', value: latexBuffer });
+  caretPath[caretPath.length - 1]++;
+  latexBuffer = null;
+  render();
+  return;
+}
 
       latexBuffer = null;
       render();
