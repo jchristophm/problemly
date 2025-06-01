@@ -62,8 +62,21 @@ function tokenToLatex(token) {
       } else {
         return `\\sqrt{${token.radicand.map(tokenToLatex).join('')}}`;
       }
-    case 'func':return `\\${token.name}\\left(${(token.arg || []).map(tokenToLatex).join('')}\\right)`;
-    case 'accent': return `\\${token.accent}{${(token.arg || []).map(tokenToLatex).join('')}}`;
+
+    case 'func':
+      return `\\${token.name}\\left(${(token.arg || []).map((t, i, arr) => {
+        const prev = arr[i - 1];
+        const needsSpace = prev?.type === 'latex' && (t.type === 'char' || t.type === 'caret');
+        return (needsSpace ? ' ' : '') + tokenToLatex(t);
+      }).join('')}\\right)`;
+
+    case 'accent':
+      return `\\${token.accent}{${(token.arg || []).map((t, i, arr) => {
+        const prev = arr[i - 1];
+        const needsSpace = prev?.type === 'latex' && (t.type === 'char' || t.type === 'caret');
+        return (needsSpace ? ' ' : '') + tokenToLatex(t);
+      }).join('')}}`;
+
     case 'latex-preview':
       // Escape leading backslash so KaTeX doesn't try to parse it
       const escaped = token.value.replace(/\\/g, '\\textbackslash ');
@@ -102,13 +115,7 @@ function render() {
   }
 
   const withCaret = renderTokensWithCaret([...tokens], caretPath);
-  let latex = '';
-  for (let i = 0; i < withCaret.length; i++) {
-    const curr = withCaret[i];
-    const prev = withCaret[i - 1];
-    if (prev?.type === 'latex' && (curr.type === 'char' || curr.type === 'caret')) latex += ' ';
-    latex += tokenToLatex(curr);
-  }
+  let latex = withCaret.map((t, i, arr) => tokenToLatex(t, arr[i - 1])).join('');
 
   if (latexBuffer && latexBuffer.length > 1) {
   const ghost = document.createElement('span');
