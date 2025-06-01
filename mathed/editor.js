@@ -97,8 +97,6 @@ function render() {
 }
 
 function insertChar(char) {
-  const { ref, index } = resolvePath(caretPath);
-
   // Start new latex buffer
   if (char === '\\') {
     latexBuffer = '\\';
@@ -109,48 +107,41 @@ function insertChar(char) {
   // Continue latex buffer
   if (latexBuffer !== null) {
     if (char === ' ') {
+      const { ref, index } = resolvePath(caretPath);
       const match = latexBuffer.match(/^\\([a-zA-Z]+)$/);
       const command = match ? match[1] : null;
 
       let newToken = null;
       if (['sin', 'cos', 'tan', 'log', 'ln'].includes(command)) {
         newToken = { type: 'func', name: command, arg: [] };
+        caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
       } else if (['vec', 'hat', 'bar', 'dot'].includes(command)) {
         newToken = { type: 'accent', accent: command, arg: [] };
+        caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
       } else if (command === 'sqrt') {
         newToken = { type: 'root', radicand: [] };
+        caretPath = caretPath.slice(0, -1).concat(index, 'radicand', 0);
       }
 
       if (newToken) {
         ref.splice(index, 0, newToken);
-
-        if (newToken.type === 'func') {
-          caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
-        } else if (newToken.type === 'accent') {
-          caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
-        } else if (newToken.type === 'root') {
-          caretPath = caretPath.slice(0, -1).concat(index, 'radicand', 0);
-        } else {
-          caretPath[caretPath.length - 1]++;
-        }
-
-        latexBuffer = null;
-        render();
-        return;
       } else {
-        // Fallback to raw LaTeX insert
         ref.splice(index, 0, { type: 'latex', value: latexBuffer });
-        caretPath[caretPath.length - 1]++;
-        latexBuffer = null;
-        render();
-        return;
+        caretPath = caretPath.slice(0, -1).concat(index + 1);
       }
+
+      latexBuffer = null;
+      render();
+      return;
     } else {
       latexBuffer += char;
       render();
       return;
     }
   }
+
+  // Everything else needs resolved ref
+  const { ref, index } = resolvePath(caretPath);
 
   // Handle structural characters
   if (char === '^') {
@@ -201,14 +192,6 @@ function insertChar(char) {
     const root = { type: 'root', radicand: [] };
     ref.splice(index, 0, root);
     caretPath = caretPath.slice(0, -1).concat(index, 'radicand', 0);
-    render();
-    return;
-  }
-
-  // Regular char
-  // If we're in a LaTeX buffer, don't insert char tokens
-  if (latexBuffer !== null) {
-    latexBuffer += char;
     render();
     return;
   }
