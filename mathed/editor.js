@@ -115,7 +115,13 @@ function render() {
   }
 
   const withCaret = renderTokensWithCaret([...tokens], caretPath);
-  let latex = withCaret.map((t, i, arr) => tokenToLatex(t, arr[i - 1])).join('');
+  let latex = '';
+    for (let i = 0; i < withCaret.length; i++) {
+      const curr = withCaret[i];
+      const prev = withCaret[i - 1];
+      if (prev?.type === 'latex' && (curr.type === 'char' || curr.type === 'caret')) latex += ' ';
+      latex += tokenToLatex(curr);
+    }
 
   if (latexBuffer && latexBuffer.length > 1) {
   const ghost = document.createElement('span');
