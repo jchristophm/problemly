@@ -107,6 +107,9 @@ function tokenToLatex(token) {
     case 'latex-preview':
       const escaped = token.value.replace(/\\/g, '\\textbackslash ');
       return `\\textcolor{gray}{\\texttt{${escaped}}}`;
+
+    case 'text':
+      return `\\text{${token.content.map(tokenToLatex).join('')}}`;
   }
 }
 
@@ -315,6 +318,10 @@ function commitLatexBuffer() {
   } else if (command === 'sqrt') {
     newToken = { type: 'root', radicand: [] };
     caretPath = caretPath.slice(0, -1).concat(index, 'radicand', 0);
+  } else if (command === 'text') {
+    newToken = { type: 'text', content: [] };
+    ref.splice(index, 0, newToken);
+    caretPath = caretPath.slice(0, -1).concat(index, 'content', 0);
   }
 
   if (newToken) {
@@ -327,7 +334,6 @@ function commitLatexBuffer() {
     );
     caretPath = caretPath.slice(0, -1).concat(index + 1); // land on dummy
   }
-
 
   latexBuffer = null;
   return true;
