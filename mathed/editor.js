@@ -34,6 +34,7 @@ function tokenToLatex(token) {
       }
     case 'func': return `\\${token.name}\\left(${(token.arg || []).map(tokenToLatex).join('')}\\right)`;
     case 'accent': return `\\${token.accent}{${(token.arg || []).map(tokenToLatex).join('')}}`;
+    case 'latex-preview': return `\\textcolor{gray}{${token.value}}`;
   }
 }
 
@@ -41,7 +42,14 @@ function renderTokensWithCaret(tokens, path) {
   const deepCopy = JSON.parse(JSON.stringify(tokens));
   let ref = deepCopy;
   for (let i = 0; i < path.length - 1; i++) ref = ref[path[i]];
-  ref.splice(path[path.length - 1], 0, { type: 'caret' });
+  if (latexBuffer) {
+    ref.splice(path[path.length - 1], 0, {
+      type: 'latex-preview',
+      value: latexBuffer
+    });
+  } else {
+    ref.splice(path[path.length - 1], 0, { type: 'caret' });
+  }
   return deepCopy;
 }
 
