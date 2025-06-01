@@ -283,16 +283,6 @@ renderedField.addEventListener('click', () => ghostInput.focus());
 ghostInput.addEventListener('input', e => {
   const val = ghostInput.value;
   ghostInput.value = '';
-  if (val === ' ') {
-    if (latexBuffer !== null) {
-      commitLatexBuffer();
-      latexBuffer = null;
-      render();
-    } else {
-      moveCaret(1);
-    }
-    return;
-  }
   if (val) insertChar(val);
 });
 
