@@ -48,3 +48,43 @@ body {
     visibility: hidden;
   }
 }
+
+/* === Equation Editor Buttons === */
+.mq-btn {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.mq-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.mq-btn:active {
+  background-color: #d0d0d0;
+}
+
+/* === Layout for the control buttons row === */
+.mq-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* === Mobile-only arrows === */
+.mq-mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mq-mobile-only {
+    display: inline-block;
+  }
+}
+
