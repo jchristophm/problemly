@@ -492,6 +492,25 @@ document.querySelectorAll('.mq-btn[data-latex]').forEach(btn => {
   });
 });
 
+document.querySelectorAll('.mq-btn[data-char]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const char = btn.getAttribute('data-char');
+
+    // 🔐 Pre-check: fail silently if no valid preceding token
+    const beforePath = caretPath.slice(0, -1).concat(caretPath[caretPath.length - 1] - 1);
+    const { ref: beforeRef, index: beforeIdx } = resolvePath(beforePath);
+    const prevToken = beforeRef?.[beforeIdx];
+
+    if (!prevToken || ['sup', 'sub'].includes(prevToken.type)) {
+      // No valid token before caret → don't inject
+      return;
+    }
+
+    insertChar(char);
+    ghostInput.focus();
+  });
+});
+
 function insertEquation() {
   const latex = tokens.map(tokenToLatex).join('');
   window.parent.postMessage({ type: 'mathed-submit', latex }, '*');
