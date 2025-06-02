@@ -108,15 +108,6 @@ function tokenToLatex(token) {
         return (needsSpace ? ' ' : '') + tokenToLatex(t);
       }).join('')}}`;
 
-    case 'latex-preview':
-      try {
-        katex.__parse(token.value);
-        return `\\textcolor{gray}{\\texttt{${token.value.replace(/\\/g, '\\textbackslash ')}}}`;
-      } catch {
-        // Return a benign placeholder so KaTeX doesn't choke
-        return '\\textcolor{gray}{|}';
-      }
-
     case 'text':
       return `\\text{${(token.content || []).map(tokenToLatex).join('')}}`;
   }
@@ -126,15 +117,7 @@ function renderTokensWithCaret(tokens, path) {
   const deepCopy = JSON.parse(JSON.stringify(tokens));
   let ref = deepCopy;
   for (let i = 0; i < path.length - 1; i++) ref = ref[path[i]];
-  if (latexBuffer !== null) {
-    ref.splice(path[path.length - 1], 0, {
-      type: 'latex-preview',
-      value: latexBuffer
-    });
-  } else {
   ref.splice(path[path.length - 1], 0, { type: 'caret' });
-}
-
   return deepCopy;
 }
 
@@ -154,21 +137,24 @@ function render() {
 
   const withCaret = renderTokensWithCaret([...tokens], caretPath);
   let latex = '';
-    for (let i = 0; i < withCaret.length; i++) {
-      const curr = withCaret[i];
-      const prev = withCaret[i - 1];
-      if (prev?.type === 'latex' && (curr.type === 'char' || curr.type === 'caret')) latex += ' ';
-      latex += tokenToLatex(curr);
+  let ghostInserted = false;
+
+  for (let i = 0; i < withCaret.length; i++) {
+    const curr = withCaret[i];
+    const prev = withCaret[i - 1];
+
+    if (prev?.type === 'latex' && (curr.type === 'char' || curr.type === 'caret')) {
+      latex += ' ';
     }
 
-  if (latexBuffer && latexBuffer.length > 1) {
-  const ghost = document.createElement('span');
-  ghost.style.color = 'gray';
-  ghost.style.fontFamily = 'monospace';
-  ghost.style.marginLeft = '4px';
-  ghost.textContent = latexBuffer;
-  renderedField.appendChild(ghost);
-}
+    if (!ghostInserted && curr.type === 'caret' && latexBuffer) {
+      const escaped = latexBuffer.replace(/\\/g, '\\textbackslash ');
+      latex += `\\textcolor{gray}{\\texttt{${escaped}}}`;
+      ghostInserted = true;
+    } else {
+      latex += tokenToLatex(curr);
+    }
+  }
 
   try {
     katex.render(latex, renderedField, { throwOnError: false });
