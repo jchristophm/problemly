@@ -25,10 +25,22 @@
 <div class="mq-toolbar-row">   
   <button class="mq-btn" data-char="^"><span>x<sup>n</sup></span></button>
   <button class="mq-btn" data-char="_"><span>x<sub>n</sub></span></button>
+  <button class="mq-btn" data-latex="\\text">abc</button>
   <button class="mq-btn" data-latex="\\sqrt">√</button>
   <button class="mq-btn" data-latex="\\vec">𝐯⃗</button>
   <button class="mq-btn" data-latex="\\hat">ẑ</button>
-  <!-- <button class="mq-btn" data-insert="subsup">xₐ²</button> -->
+  <select id="funcDropdown" class="mq-dropdown">
+    <option value="">Functions</option>
+    <option data-latex="\\sin">sin</option>
+    <option data-latex="\\cos">cos</option>
+    <option data-latex="\\tan">tan</option>
+    <option data-latex="\\arcsin">arcsin</option>
+    <option data-latex="\\arccos">arccos</option>
+    <option data-latex="\\arctan">arctan</option>
+    <option data-latex="\\exp">exp</option>
+    <option data-latex="\\ln">ln</option>
+    <option data-latex="\\log">log</option>
+  </select>
 </div>
 
 <div class="math-editor-wrapper">
