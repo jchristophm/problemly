@@ -1,5 +1,7 @@
 const renderedField = document.getElementById('renderedField');
 const ghostInput = document.getElementById('ghostInput');
+const knownFuncs = ['sin', 'cos', 'tan', 'log', 'ln', 'text', 'exp', 'arcsin', 'arccos', 'arctan'];
+const knownAccents = ['vec', 'hat', 'bar', 'dot'];
 
 let tokens = [];
 let caretPath = [0];
@@ -183,10 +185,10 @@ function insertChar(char) {
       const command = match ? match[1] : null;
 
       let newToken = null;
-      if (['sin', 'cos', 'tan', 'log', 'ln', 'text'].includes(command)) {
+      if (knownFuncs.includes(command)) {
         newToken = { type: 'func', name: command, arg: [] };
         caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
-      } else if (['vec', 'hat', 'bar', 'dot'].includes(command)) {
+      } else if (knownAccents.includes(command)) {
         newToken = { type: 'accent', accent: command, arg: [] };
         caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
       } else if (command === 'sqrt') {
@@ -308,10 +310,10 @@ function commitLatexBuffer() {
   const command = latexBuffer.trim().replace(/^\\/, '');
   let newToken = null;
 
-  if (['sin', 'cos', 'tan', 'log', 'ln', 'text'].includes(command)) {
+  if (knownFuncs.includes(command)) {
     newToken = { type: 'func', name: command, arg: [] };
     caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
-  } else if (['vec', 'hat', 'bar', 'dot'].includes(command)) {
+  } else if (knownAccents.includes(command)) {
     newToken = { type: 'accent', accent: command, arg: [] };
     caretPath = caretPath.slice(0, -1).concat(index, 'arg', 0);
   } else if (command === 'sqrt') {
