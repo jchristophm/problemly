@@ -148,7 +148,11 @@ function render() {
     }
 
     if (!ghostInserted && curr.type === 'caret' && latexBuffer) {
-      const escaped = latexBuffer.replace(/\\/g, '\\textbackslash ');
+      const escaped = latexBuffer
+        .replace(/\\/g, '\\textbackslash ')
+        .replace(/{/g, '\\{')
+        .replace(/}/g, '\\}');
+
       latex += `\\textcolor{gray}{\\texttt{${escaped}}}`;
       ghostInserted = true;
     } else {
