@@ -511,6 +511,15 @@ document.querySelectorAll('.mq-btn[data-char]').forEach(btn => {
   });
 });
 
+document.getElementById('funcDropdown').addEventListener('change', e => {
+  const opt = e.target.selectedOptions[0];
+  if (!opt || !opt.dataset.latex) return;
+  for (const char of opt.dataset.latex) insertChar(char);
+  commitLatexBuffer();
+  ghostInput.focus();
+  e.target.value = '';
+});
+
 function insertEquation() {
   const latex = tokens.map(tokenToLatex).join('');
   window.parent.postMessage({ type: 'mathed-submit', latex }, '*');
