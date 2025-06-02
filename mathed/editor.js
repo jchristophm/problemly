@@ -517,7 +517,7 @@ document.getElementById('funcDropdown').addEventListener('change', e => {
   const opt = e.target.selectedOptions[0];
   if (!opt || !opt.dataset.latex) return;
   for (const char of opt.dataset.latex) insertChar(char);
-  commitLatexBuffer();
+  insertChar(' '); // force commit + structured parsing
   ghostInput.focus();
   e.target.value = '';
 });
