@@ -109,8 +109,13 @@ function tokenToLatex(token) {
       }).join('')}}`;
 
     case 'latex-preview':
-      const escaped = token.value.replace(/\\/g, '\\textbackslash ');
-      return `\\textcolor{gray}{\\texttt{${escaped}}}`;
+      try {
+        katex.__parse(token.value);
+        return `\\textcolor{gray}{\\texttt{${token.value.replace(/\\/g, '\\textbackslash ')}}}`;
+      } catch {
+        // Return a benign placeholder so KaTeX doesn't choke
+        return '\\textcolor{gray}{|}';
+      }
 
     case 'text':
       return `\\text{${(token.content || []).map(tokenToLatex).join('')}}`;
