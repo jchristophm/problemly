@@ -78,7 +78,7 @@ body {
   border: 1px solid #ccc;
   border-radius: 6px;
   padding: 4px;
-  font-family: "Courier New";
+  font-family: "IBM Plex Mono", "Courier New", Courier, monospace;
   font-weight: 600;
   font-size: 1.5rem;
   cursor: pointer;
@@ -181,7 +181,7 @@ body {
   border: 1px solid #ccc;
   border-radius: 6px;
   padding: 4px 28px 4px 8px; /* extra right-padding for arrow */
-  font-family: "Courier New";
+  font-family: "IBM Plex Mono", "Courier New", Courier, monospace;
   font-weight: 600;
   font-size: 1.5rem;
   cursor: pointer;
