@@ -1,0 +1,715 @@
+const renderedField = document.getElementById('renderedField');
+const ghostInput = document.getElementById('ghostInput');
+const validAtoms = new Set([
+  "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne",
+  "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
+  "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
+  "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo",
+  "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Xe",
+  "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy",
+  "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt",
+  "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Th",
+  "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No",
+  "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Fl", "Lv",
+  "Ts", "Og"
+]);
+
+
+let tokens = [];
+let caretPath = [0];
+let typedBuffer = '';
+let numberBuffer = '';
+let numberStartPath = null;
+
+
+function resolvePath(path) {
+  let ref = tokens;
+  for (let i = 0; i < path.length - 1; i++) ref = ref[path[i]];
+  return { ref, index: path[path.length - 1] };
+}
+
+
+function tokenToLatex(token) {
+  switch (token.type) {
+    case 'atom':
+      return token.symbol;
+    case 'subscript':
+      return `_{${token.value}}`;
+    case 'coefficient':
+      return `${token.value}`;
+    case 'group':
+      return `(${token.tokens.map(tokenToLatex).join('')})`;
+    case 'arrow':
+      return '\\rightarrow{}';
+    case 'char':
+      return token.latex;
+    case 'caret':
+      return '\\textcolor{gray}{|}';
+    case 'ghost':
+      return `\\textcolor{gray}{\\texttt{${token.text}}}`;
+    default:
+      return '';
+  }
+}
+
+
+function renderTokensWithCaret(tokens, path) {
+  const deepCopy = JSON.parse(JSON.stringify(tokens));
+  let ref = deepCopy;
+  for (let i = 0; i < path.length - 1; i++) ref = ref[path[i]];
+  const index = path[path.length - 1];
+
+
+  // Add ghost BEFORE caret if typedBuffer is active
+  if (typedBuffer.length === 1) {
+    ref.splice(index, 0, {
+      type: 'ghost',
+      text: typedBuffer.toUpperCase()
+    });
+    ref.splice(index + 1, 0, { type: 'caret' }); // caret after ghost
+  } else {
+    ref.splice(index, 0, { type: 'caret' });
+  }
+
+
+  return deepCopy;
+}
+
+
+function render() {
+  renderedField.innerHTML = '';
+
+
+  // Placeholder for empty input
+  if (tokens.length === 0 && typedBuffer.length === 0) {
+    const placeholder = document.createElement('span');
+    placeholder.style.color = 'gray';
+    placeholder.textContent = 'Type chem equation ...';
+    const caret = document.createElement('span');
+    caret.className = 'caret-blink';
+    renderedField.appendChild(placeholder);
+    renderedField.appendChild(caret);
+    return;
+  }
+
+
+  const effectiveTokens = JSON.parse(JSON.stringify(tokens));
+  const withCaret = renderTokensWithCaret(effectiveTokens, caretPath);
+
+
+  let latex = '';
+  for (let i = 0; i < withCaret.length; i++) {
+    latex += tokenToLatex(withCaret[i]);
+  }
+
+
+  try {
+    katex.render(latex, renderedField, { throwOnError: false });
+  } catch {
+    renderedField.innerHTML = '<span style="color:red">[Invalid Expression]</span>';
+  }
+
+
+  updateAtomSummary();
+}
+
+
+function insertChar(char) {
+  const { ref, index } = resolvePath(caretPath);
+
+
+  // --- Handle atom letters first ---
+  if (/^[a-zA-Z]$/.test(char)) {
+    typedBuffer += char;
+
+
+    if (typedBuffer.length === 2) {
+      const two = typedBuffer[0].toUpperCase() + typedBuffer[1].toLowerCase();
+
+
+      if (validAtoms.has(two)) {
+        ref.splice(index, 0, { type: 'atom', symbol: two });
+        caretPath[caretPath.length - 1]++;
+        typedBuffer = '';
+        render();
+        return;
+      }
+
+
+      // Commit first letter as atom or invalid
+      const one = typedBuffer[0].toUpperCase();
+      const token = validAtoms.has(one)
+        ? { type: 'atom', symbol: one }
+        : { type: 'invalid', symbol: one };
+
+
+      ref.splice(index, 0, token);
+      caretPath[caretPath.length - 1]++;
+      const second = typedBuffer[1];
+      typedBuffer = '';
+      insertChar(second); // re-process the second letter
+      return;
+    }
+
+
+    // Wait for a second letter — show ghost
+    render();
+    return;
+  }
+
+
+  // --- Commit buffer if non-letter typed ---
+  if (typedBuffer.length) {
+    const one = typedBuffer[0].toUpperCase();
+    const token = validAtoms.has(one)
+      ? { type: 'atom', symbol: one }
+      : { type: 'invalid', symbol: one };
+
+
+    ref.splice(index, 0, token);
+    caretPath[caretPath.length - 1]++;
+    typedBuffer = '';
+    insertChar(char); // reprocess the triggering char
+    return;
+  }
+
+
+  // --- Handle digits ---
+  if (/^[0-9]$/.test(char)) {
+    const prevToken = ref[index - 1];
+    const token = {
+      type: (prevToken && (prevToken.type === 'atom' || prevToken.type === 'group'))
+        ? 'subscript'
+        : 'coefficient',
+      value: parseInt(char, 10)
+    };
+
+
+    ref.splice(index, 0, token);
+    caretPath[caretPath.length - 1]++;
+    render();
+    return;
+  }
+
+
+  // --- Special characters ---
+  if (char === '>' || char === '=') {
+    ref.splice(index, 0, { type: 'arrow' });
+    caretPath[caretPath.length - 1]++;
+    render();
+    return;
+  }
+
+
+  if (char === '|') {
+    ref.splice(index, 0, { type: 'caret' });
+    caretPath[caretPath.length - 1]++;
+    render();
+    return;
+  }
+
+
+  if (char === '(') {
+    const group = { type: 'group', tokens: [] };
+    ref.splice(index, 0, group);
+    caretPath = caretPath.slice(0, -1).concat(index, 'tokens', 0);
+    render();
+    return;
+  }
+
+
+  if (char === ')') {
+    const groupIndex = caretPath.lastIndexOf('tokens');
+    if (groupIndex !== -1) {
+      caretPath = caretPath.slice(0, groupIndex).concat(caretPath[groupIndex - 1] + 1);
+      render();
+      return;
+    }
+  }
+
+
+  // --- Default fallback: silently ignore unsupported characters ---
+  if (/^[+\-]$/.test(char)) {
+    ref.splice(index, 0, { type: 'char', latex: char });
+    caretPath[caretPath.length - 1]++;
+    render();
+  } else {
+    console.warn(`Ignored unsupported character: '${char}'`);
+  }
+}
+
+
+function deleteChar() {
+  if (typedBuffer.length > 0) {
+    typedBuffer = '';
+    render();
+    return;
+  }
+
+
+  const { ref, index } = resolvePath(caretPath);
+  if (index > 0) {
+    ref.splice(index - 1, 1);
+    caretPath[caretPath.length - 1]--;
+    render();
+  }
+}
+
+
+function diveIntoStructure(token, path, dir) {
+  if (!token) return null;
+  const fields = {
+    sub: ['sub'],
+    group: ['tokens']
+  };
+  const keys = fields[token.type];
+  if (keys) {
+    for (const key of keys) {
+      if (Array.isArray(token[key])) {
+        const target = token[key];
+        return path.concat(key, dir < 0 ? target.length : 0);
+      }
+    }
+  }
+  return null;
+}
+
+
+function moveCaret(dir) {
+  const path = [...caretPath];
+  const { ref, index } = resolvePath(path);
+  const diveIdx = dir > 0 ? index : index - 1;
+  const diveToken = ref[diveIdx];
+  const divePath = diveIntoStructure(diveToken, path.slice(0, -1).concat(diveIdx), dir);
+  if (divePath) {
+    caretPath = divePath;
+    render(); return;
+  }
+
+
+  const newIndex = index + dir;
+  if (newIndex >= 0 && newIndex <= ref.length) {
+    caretPath = path.slice(0, -1).concat(newIndex);
+    render(); return;
+  }
+
+
+  for (let i = path.length - 2; i >= 0; i -= 2) {
+    const parentPath = path.slice(0, i);
+    const { ref: pRef, index: pIdx } = resolvePath(parentPath);
+    const fieldKey = path[i];
+    const siblings = {
+      sub: ['base', 'sub'],
+      group: ['tokens']
+    };
+    const container = pRef[pIdx];
+    if (container?.type && siblings[container.type]) {
+      const fields = siblings[container.type];
+      const fieldIdx = fields.indexOf(fieldKey);
+      const targetField = fields[fieldIdx + dir];
+      if (targetField && Array.isArray(container[targetField])) {
+        caretPath = parentPath.concat(targetField, dir > 0 ? 0 : container[targetField].length);
+        render(); return;
+      }
+    }
+
+
+    if ((dir < 0 && index === 0) || (dir > 0 && index === ref.length)) {
+      caretPath = parentPath.slice(0, -1).concat(dir > 0 ? pIdx + 1 : pIdx);
+      render(); return;
+    }
+  }
+}
+
+
+renderedField.addEventListener('click', () => ghostInput.focus());
+
+
+ghostInput.addEventListener('input', e => {
+  const val = ghostInput.value;
+  ghostInput.value = '';
+
+
+  if (val === ' ') {
+    if (typedBuffer.length) {
+      const { ref, index } = resolvePath(caretPath);
+      const one = typedBuffer[0].toUpperCase();
+      const token = validAtoms.has(one)
+        ? { type: 'atom', symbol: one }
+        : { type: 'invalid', symbol: one };
+
+
+      ref.splice(index, 0, token);
+      caretPath[caretPath.length - 1]++;
+      typedBuffer = '';
+    } else {
+      moveCaret(1);
+    }
+    render();
+    return;
+  }
+  if (val) insertChar(val);
+});
+
+
+ghostInput.addEventListener('keydown', e => {
+  if (e.key === 'Backspace') {
+    e.preventDefault(); deleteChar();
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault(); moveCaret(-1);
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault(); moveCaret(1);
+  }
+});
+
+
+renderedField.addEventListener('focus', () => ghostInput.focus());
+window.addEventListener('DOMContentLoaded', () => {
+  ghostInput.focus();
+  render();
+});
+
+
+document.querySelectorAll('.mq-btn[data-latex]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const latex = btn.getAttribute('data-latex');
+   
+    // Feed each character into insertChar
+    for (const char of latex) {
+      insertChar(char);
+    }
+
+
+    // Optional: if sitting on dummy char, skip it
+    const { ref, index } = resolvePath(caretPath);
+    const token = ref[index];
+    if (token?.type === 'char' && token.latex === '') {
+      moveCaret(1);
+    }
+
+
+    render();
+
+
+    // Refocus the hidden input so keyboard stays active
+    ghostInput.focus();
+  });
+});
+
+
+document.querySelectorAll('.mq-btn[data-char]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const char = btn.getAttribute('data-char');
+
+
+    // 🔐 Pre-check: fail silently if no valid preceding token,
+    // unless the char is standalone like "(" or ">"
+    const beforePath = caretPath.slice(0, -1).concat(caretPath[caretPath.length - 1] - 1);
+    const { ref: beforeRef, index: beforeIdx } = resolvePath(beforePath);
+    const prevToken = beforeRef?.[beforeIdx];
+
+
+    const allowWithoutPrev = ['(', '>'].includes(char);
+
+
+    if (!allowWithoutPrev && (!prevToken || ['sup', 'sub'].includes(prevToken.type))) {
+      return;
+    }
+
+
+    insertChar(char);
+    ghostInput.focus();
+  });
+});
+
+
+document.getElementById('funcDropdown').addEventListener('change', e => {
+  const opt = e.target.selectedOptions[0];
+  if (!opt || !opt.dataset.latex) return;
+  for (const char of opt.dataset.latex) insertChar(char);
+  insertChar(' '); // force commit + structured parsing
+  ghostInput.focus();
+  e.target.value = '';
+});
+
+
+document.getElementById('greekDropdown').addEventListener('change', e => {
+  const opt = e.target.selectedOptions[0];
+  if (!opt || !opt.dataset.latex) return;
+  for (const char of opt.dataset.latex) insertChar(char);
+  insertChar(' '); // simulate space to commit it
+  ghostInput.focus();
+  e.target.value = '';
+});
+
+
+function insertEquation() {
+  const latex = tokens.map(tokenToLatex).join('');
+  window.parent.postMessage({ type: 'mathed-submit', latex }, '*');
+}
+
+
+// Add this right after insertEquation()
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    insertEquation();
+  }
+});
+
+
+// =============================
+// 🧪 Chemical Equation Analysis
+// =============================
+
+
+function analyzeEquation(tokens) {
+  const sides = [[], []];
+  let currentSide = 0;
+
+
+  for (const token of tokens) {
+    if (token.type === 'arrow') {
+      currentSide = 1;
+    } else {
+      sides[currentSide].push(token);
+    }
+  }
+
+
+  return {
+    reactants: analyzeSide(sides[0]),
+    products: analyzeSide(sides[1]),
+  };
+}
+
+
+function analyzeSide(tokens) {
+  const molecules = splitIntoMolecules(tokens);
+  const atomCounts = {};
+
+
+  for (const mol of molecules) {
+    const localCounts = countAtomsInMolecule(mol.tokens, mol.coefficient || 1);
+    for (const [atom, count] of Object.entries(localCounts)) {
+      atomCounts[atom] = (atomCounts[atom] || 0) + count;
+    }
+  }
+
+
+  return atomCounts;
+}
+
+
+function splitIntoMolecules(tokens) {
+  const molecules = [];
+  let i = 0;
+  let currentMoleculeTokens = [];
+  let currentCoefficient = 1;
+
+
+  while (i < tokens.length) {
+    const token = tokens[i];
+
+
+    if (token.type === 'arrow') {
+      // Push molecule before the arrow
+      if (currentMoleculeTokens.length) {
+        molecules.push({
+          tokens: currentMoleculeTokens,
+          coefficient: currentCoefficient
+        });
+        currentMoleculeTokens = [];
+        currentCoefficient = 1;
+      }
+      i++; // skip arrow
+      continue;
+    }
+
+
+    if (token.type === 'char' && token.latex === '+') {
+      molecules.push({
+        tokens: currentMoleculeTokens,
+        coefficient: currentCoefficient
+      });
+      currentMoleculeTokens = [];
+      currentCoefficient = 1;
+      i++; // skip plus
+      continue;
+    }
+
+
+    if (token.type === 'coefficient' && currentMoleculeTokens.length === 0) {
+      currentCoefficient = token.value;
+    } else {
+      currentMoleculeTokens.push(token);
+    }
+
+
+    i++;
+  }
+
+
+  // Final molecule if any
+  if (currentMoleculeTokens.length) {
+    molecules.push({
+      tokens: currentMoleculeTokens,
+      coefficient: currentCoefficient
+    });
+  }
+
+
+  return molecules;
+}
+
+
+function countAtomsInMolecule(tokens, multiplier) {
+  const counts = {};
+
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+
+
+    // Atom by itself
+    if (token.type === 'atom') {
+      let subscript = 1;
+
+
+      // Check next token for subscript
+      const next = tokens[i + 1];
+      if (next?.type === 'subscript') {
+        subscript = next.value;
+        i++; // skip over the subscript
+      }
+
+
+      counts[token.symbol] = (counts[token.symbol] || 0) + subscript * multiplier;
+    }
+
+
+    // Grouped token (like (OH)2)
+    else if (token.type === 'group') {
+      let groupMultiplier = 1;
+      const next = tokens[i + 1];
+
+
+      if (next?.type === 'subscript') {
+        groupMultiplier = next.value;
+        i++; // skip over subscript
+      }
+
+
+      const innerCounts = countAtomsInMolecule(token.tokens, multiplier * groupMultiplier);
+      for (const [atom, count] of Object.entries(innerCounts)) {
+        counts[atom] = (counts[atom] || 0) + count;
+      }
+    }
+
+
+    // Ignore all else (caret, char, etc.)
+  }
+
+
+  return counts;
+}
+
+
+function updateAtomSummary() {
+  const { reactants, products } = analyzeEquation(tokens);
+
+
+  const allAtoms = new Set([
+    ...Object.keys(reactants),
+    ...Object.keys(products)
+  ]);
+
+
+  const tbody = document.getElementById('atomSummaryBody');
+  tbody.innerHTML = '';
+
+
+  allAtoms.forEach(atom => {
+    const rCount = reactants[atom] || 0;
+    const pCount = products[atom] || 0;
+
+
+    const row = document.createElement('tr');
+    const isBalanced = rCount === pCount;
+
+
+    row.innerHTML = `
+      <td>${atom}</td>
+      <td>${rCount}</td>
+      <td>${atom}</td>
+      <td>${pCount}</td>
+    `;
+
+
+    row.style.color = isBalanced ? 'darkgreen' : 'crimson';
+    row.style.fontWeight = isBalanced ? 'normal' : 'bold';
+
+
+    tbody.appendChild(row);
+  });
+}
+
+
+function isAtMoleculeStart(ref, index) {
+  if (index === 0) return true;
+  const prev = ref[index - 1];
+  return (
+    prev?.type === 'char' && prev.latex === '+' ||
+    prev?.type === 'arrow'
+  );
+}
+
+
+function isInsideStructure(path) {
+  return path.includes('sub') || path.includes('group') || path.includes('tokens') || path.includes('base');
+}
+
+
+function isCaretAtTopLevelMoleculeStart(tokens, caretPath) {
+  // Must be in the top-level array
+  if (caretPath.length !== 1) return false;
+
+
+  const index = caretPath[0];
+  const prev = tokens[index - 1];
+
+
+  return (
+    index === 0 ||
+    (prev?.type === 'char' && prev.latex === '+') ||
+    prev?.type === 'arrow'
+  );
+}
+
+
+function commitNumberBuffer(ref, index) {
+  if (!numberBuffer.length) return;
+
+
+  const value = parseInt(numberBuffer, 10);
+  numberBuffer = '';
+
+
+  const nextToken = ref[index];
+  let token;
+
+
+  // If we're about to insert an atom/group → it's a coefficient
+  if (nextToken?.type === 'atom' || nextToken?.type === 'group') {
+    token = { type: 'coefficient', value };
+  } else {
+    token = { type: 'char', latex: String(value) }; // fallback if stray number
+  }
+
+
+  ref.splice(index, 0, token);
+  caretPath[caretPath.length - 1]++;
+}
+
+
+
